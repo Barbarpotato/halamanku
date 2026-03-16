@@ -60,11 +60,6 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 			`--primary-background-color: ${primaryBg};`,
 		);
 
-		// Update secondary-background-color (handle typo: seconary -> secondary)
-		updatedHtml = updatedHtml.replace(
-			/--seconary-background-color:\s*[^;]+;/g,
-			`--secondary-background-color: ${secondaryBg};`,
-		);
 		updatedHtml = updatedHtml.replace(
 			/--secondary-background-color:\s*[^;]+;/g,
 			`--secondary-background-color: ${secondaryBg};`,

@@ -50,7 +50,8 @@ export async function GET(request) {
           ebook_user_content_number,
           ebook_user_content_title,
           publish_site_url,
-          is_published
+          is_published,
+		  supabase_file_storage_url
         )
       `);
 
