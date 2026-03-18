@@ -143,19 +143,14 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 					<div className={styles.section}>
 						<h2>Basic Information</h2>
 						<div className={styles.grid}>
-							<div className={styles.field}>
-								<label htmlFor="ebook_user_content_number">
-									Content Number
-								</label>
-								<input
-									type="text"
-									id="ebook_user_content_number"
-									name="ebook_user_content_number"
-									value={formData.ebook_user_content_number}
-									disabled
-									required
-								/>
-							</div>
+							<input
+								type="hidden"
+								id="ebook_user_content_number"
+								name="ebook_user_content_number"
+								value={formData.ebook_user_content_number}
+								disabled
+								required
+							/>
 							<div className={styles.field}>
 								<label htmlFor="ebook_template_id">
 									Template
@@ -166,7 +161,6 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 									value={formData.ebook_template_id}
 									onChange={handleChange}
 								>
-									<option value="">Select a template</option>
 									{templates.map((template) => (
 										<option
 											key={template.id}

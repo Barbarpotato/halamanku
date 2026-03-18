@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import styles from "../../new/new.module.css";
 
@@ -17,11 +18,50 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 
 	// PDF file state
 	const [pdfFile, setPdfFile] = useState(null);
-	const [pdfPath, setPdfPath] = useState(
-		content.supabase_file_storage_url || "",
-	);
+	const [pdfPath, setPdfPath] = useState(content.storage_file_name || "");
 	const [pdfLoading, setPdfLoading] = useState(false);
 	const [pdfError, setPdfError] = useState(null);
+
+	// Upload worker status - will be updated via polling
+	const [uploadWorkerStatus, setUploadWorkerStatus] = useState(
+		content.upload_worker_status || "IDLE",
+	);
+
+	// Poll for upload worker status
+	const { data: statusData, isLoading: statusLoading } = useQuery({
+		queryKey: ["uploadWorkerStatus", content.id],
+		queryFn: async () => {
+			const { data, error } = await supabase
+				.from("ebook_user_content")
+				.select("upload_worker_status")
+				.eq("id", content.id)
+				.single();
+
+			if (error) {
+				return null;
+			}
+
+			return data?.upload_worker_status || "IDLE";
+		},
+		refetchInterval: 2000, // Poll every 2 seconds
+		enabled:
+			uploadWorkerStatus !== "SUCCESS" || uploadWorkerStatus !== "FAILED",
+	});
+
+	// Update local state when polling returns new status
+	useEffect(() => {
+		if (statusData) {
+			setUploadWorkerStatus(statusData);
+		}
+	}, [statusData]);
+
+	// Determine if we should show loader (not IDLE or SUCCESS)
+	const showLoader =
+		uploadWorkerStatus !== "IDLE" && uploadWorkerStatus !== "SUCCESS";
+
+	// Determine if delete button should be visible
+	const showActionButton =
+		uploadWorkerStatus === "IDLE" || uploadWorkerStatus === "SUCCESS";
 
 	const [formData, setFormData] = useState({
 		ebook_template_id: content.ebook_template_id || "",
@@ -29,12 +69,6 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 		ebook_user_content_title: content.ebook_user_content_title || "",
 		ebook_user_content_description:
 			content.ebook_user_content_description || "",
-		template_primary_background_color:
-			content.template_primary_background_color || "#FFFFFF",
-		template_secondary_background_color:
-			content.template_secondary_background_color || "#F8F9FA",
-		template_text_color: content.template_text_color || "#1E293B",
-		template_heading_text: content.template_heading_text || "",
 		template_preview_code: content.ebook_template_preview_code || "",
 		is_published: content.is_published || false,
 	});
@@ -42,97 +76,13 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 	// Check if ebook is already published
 	const isPublished = formData.is_published;
 
-	// Helper function to update CSS variables in the template HTML
-	const updateCssVariables = (
-		htmlCode,
-		primaryBg,
-		secondaryBg,
-		textColor,
-		headingText,
-	) => {
-		if (!htmlCode) return htmlCode;
-
-		let updatedHtml = htmlCode;
-
-		// Update primary-background-color
-		updatedHtml = updatedHtml.replace(
-			/--primary-background-color:\s*[^;]+;/g,
-			`--primary-background-color: ${primaryBg};`,
-		);
-
-		updatedHtml = updatedHtml.replace(
-			/--secondary-background-color:\s*[^;]+;/g,
-			`--secondary-background-color: ${secondaryBg};`,
-		);
-
-		// Update text-color
-		updatedHtml = updatedHtml.replace(
-			/--text-color:\s*[^;]+;/g,
-			`--text-color: ${textColor};`,
-		);
-
-		// Update heading in APP_CONFIG
-		if (headingText) {
-			updatedHtml = updatedHtml.replace(
-				/HEADING:\s*["'][^"']*["']/g,
-				`HEADING: "${headingText}"`,
-			);
-
-			updatedHtml = updatedHtml.replace(
-				/TITLE:\s*["'][^"']*["']/g,
-				`TITLE: "${headingText}"`,
-			);
-		}
-
-		return updatedHtml;
-	};
-
 	const handleChange = (e) => {
 		const { name, value, type, checked } = e.target;
 
-		// If color fields or heading text change, update the CSS variables in template_preview_code
-		if (
-			name === "template_primary_background_color" ||
-			name === "template_secondary_background_color" ||
-			name === "template_text_color" ||
-			name === "template_heading_text"
-		) {
-			const newPrimaryBg =
-				name === "template_primary_background_color"
-					? value
-					: formData.template_primary_background_color;
-			const newSecondaryBg =
-				name === "template_secondary_background_color"
-					? value
-					: formData.template_secondary_background_color;
-			const newTextColor =
-				name === "template_text_color"
-					? value
-					: formData.template_text_color;
-			const newHeadingText =
-				name === "template_heading_text"
-					? value
-					: formData.template_heading_text;
-
-			const updatedPreviewCode = updateCssVariables(
-				formData.template_preview_code,
-				newPrimaryBg,
-				newSecondaryBg,
-				newTextColor,
-				newHeadingText,
-			);
-
-			setFormData((prev) => ({
-				...prev,
-				[name]: value,
-				template_preview_code: updatedPreviewCode,
-			}));
-		} else {
-			setFormData((prev) => ({
-				...prev,
-				[name]: type === "checkbox" ? checked : value,
-			}));
-		}
+		setFormData((prev) => ({
+			...prev,
+			[name]: type === "checkbox" ? checked : value,
+		}));
 	};
 
 	// Handle file selection
@@ -166,6 +116,7 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 		try {
 			const formData = new FormData();
 			formData.append("file", pdfFile);
+			formData.append("id", content.id);
 
 			const response = await fetch(STORAGE_URL, {
 				method: "POST",
@@ -183,7 +134,9 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 				// Save the path to database
 				await supabase
 					.from("ebook_user_content")
-					.update({ supabase_file_storage_url: path })
+					.update({
+						storage_file_name: path,
+					})
 					.eq("id", content.id);
 				setPdfFile(null);
 				if (fileInputRef.current) {
@@ -191,88 +144,6 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 				}
 			} else {
 				throw new Error(result.error || "Upload failed");
-			}
-		} catch (err) {
-			setPdfError(err.message);
-		} finally {
-			setPdfLoading(false);
-		}
-	};
-
-	// Update existing PDF
-	const handleUpdatePdf = async () => {
-		if (!pdfFile || !pdfPath) {
-			setPdfError("No existing file to update");
-			return;
-		}
-
-		setPdfLoading(true);
-		setPdfError(null);
-
-		try {
-			const formData = new FormData();
-			formData.append("file", pdfFile);
-			formData.append("path", pdfPath);
-
-			const response = await fetch(STORAGE_URL, {
-				method: "PUT",
-				headers: {
-					Authorization: `Bearer ${getAnonKey()}`,
-				},
-				body: formData,
-			});
-
-			const result = await response.json();
-
-			if (result.status === "SUCCESS") {
-				setPdfFile(null);
-				if (fileInputRef.current) {
-					fileInputRef.current.value = "";
-				}
-			} else {
-				throw new Error(result.error || "Update failed");
-			}
-		} catch (err) {
-			setPdfError(err.message);
-		} finally {
-			setPdfLoading(false);
-		}
-	};
-
-	// Delete PDF
-	const handleDeletePdf = async () => {
-		if (!pdfPath) {
-			setPdfError("No file to delete");
-			return;
-		}
-
-		if (!confirm("Are you sure you want to delete this PDF?")) return;
-
-		setPdfLoading(true);
-		setPdfError(null);
-
-		try {
-			const formData = new FormData();
-			formData.append("path", pdfPath);
-
-			const response = await fetch(STORAGE_URL, {
-				method: "DELETE",
-				headers: {
-					Authorization: `Bearer ${getAnonKey()}`,
-				},
-				body: formData,
-			});
-
-			const result = await response.json();
-
-			if (result.status === "SUCCESS") {
-				setPdfPath("");
-				await supabase
-					.from("ebook_user_content")
-					.update({ supabase_file_storage_url: null })
-					.eq("id", content.id);
-			} else {
-				throw new Error(result.error || "Delete failed");
 			}
 		} catch (err) {
 			setPdfError(err.message);
@@ -370,9 +241,9 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 
 		try {
 			// Check if there's a PDF file to delete from storage
-			if (content.supabase_file_storage_url) {
+			if (content.storage_file_name) {
 				const formData = new FormData();
-				formData.append("path", content.supabase_file_storage_url);
+				formData.append("path", content.storage_file_name);
 
 				const response = await fetch(STORAGE_URL, {
 					method: "DELETE",
@@ -566,174 +437,94 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 					</div>
 
 					<div className={styles.section}>
-						<h2>Template Styling</h2>
-						<div className={styles.grid}>
-							<div className={styles.field}>
-								<label htmlFor="template_primary_background_color">
-									Primary Background
-								</label>
-								<div className={styles.colorInput}>
-									<input
-										type="color"
-										id="template_primary_background_color"
-										name="template_primary_background_color"
-										value={
-											formData.template_primary_background_color
-										}
-										disabled={isPublished}
-										onChange={handleChange}
-									/>
-									<input
-										type="text"
-										value={
-											formData.template_primary_background_color
-										}
-										onChange={handleChange}
-										disabled={isPublished}
-										name="template_primary_background_color"
-									/>
-								</div>
-							</div>
-							<div className={styles.field}>
-								<label htmlFor="template_secondary_background_color">
-									Secondary Background
-								</label>
-								<div className={styles.colorInput}>
-									<input
-										type="color"
-										id="template_secondary_background_color"
-										name="template_secondary_background_color"
-										value={
-											formData.template_secondary_background_color
-										}
-										disabled={isPublished}
-										onChange={handleChange}
-									/>
-									<input
-										type="text"
-										value={
-											formData.template_secondary_background_color
-										}
-										disabled={isPublished}
-										onChange={handleChange}
-										name="template_secondary_background_color"
-									/>
-								</div>
-							</div>
-							<div className={styles.field}>
-								<label htmlFor="template_text_color">
-									Text Color
-								</label>
-								<div className={styles.colorInput}>
-									<input
-										type="color"
-										id="template_text_color"
-										name="template_text_color"
-										value={formData.template_text_color}
-										onChange={handleChange}
-										disabled={isPublished}
-									/>
-									<input
-										type="text"
-										value={formData.template_text_color}
-										onChange={handleChange}
-										disabled={isPublished}
-										name="template_text_color"
-									/>
-								</div>
-							</div>
-						</div>
-						<div className={styles.field}>
-							<label htmlFor="template_heading_text">
-								Heading Text
-							</label>
-							<input
-								type="text"
-								id="template_heading_text"
-								name="template_heading_text"
-								value={formData.template_heading_text}
-								onChange={handleChange}
-								placeholder="Enter heading text"
-								disabled={isPublished}
-							/>
-						</div>
-					</div>
-
-					<div className={styles.section}>
 						<h2>PDF File</h2>
-						{pdfError && (
-							<div
-								className={styles.error}
-								style={{ marginBottom: "16px" }}
-							>
-								{pdfError}
+						{/* Loader - shown when status is PROCESSING or FAILED */}
+						{showLoader && (
+							<div className={styles.loaderContainer}>
+								<div className={styles.loaderSpinner}></div>
+								<p className={styles.loaderText}>
+									Please wait until the pdf upload is done
+								</p>
+								<p className={styles.loaderStatus}>
+									Current status: {uploadWorkerStatus}
+								</p>
 							</div>
 						)}
-						<div className={styles.field}>
-							<label htmlFor="pdf_file">
-								{pdfPath
-									? "Replace PDF File"
-									: "Upload PDF File"}
-							</label>
-							<input
-								type="file"
-								id="pdf_file"
-								ref={fileInputRef}
-								accept=".pdf"
-								onChange={handleFileChange}
-								disabled={isPublished}
-								className={styles.fileInput}
-							/>
-						</div>
-						<div className={styles.pdfActions}>
-							{pdfPath ? (
-								<>
-									<button
-										type="button"
-										onClick={handleGetPdfUrl}
-										disabled={pdfLoading}
-										className={styles.viewBtn}
+
+						{/* PDF File Section - hidden when showLoader is true */}
+						{!showLoader && (
+							<>
+								{pdfError && (
+									<div
+										className={styles.error}
+										style={{ marginBottom: "16px" }}
 									>
-										{pdfLoading ? "Loading..." : "View PDF"}
-									</button>
-									{pdfFile && (
+										{pdfError}
+									</div>
+								)}
+								{/* Show file input only if no file is uploaded yet */}
+								{!pdfPath && (
+									<div className={styles.field}>
+										<label htmlFor="pdf_file">
+											Upload PDF File
+										</label>
+										<input
+											type="file"
+											id="pdf_file"
+											ref={fileInputRef}
+											accept=".pdf"
+											onChange={handleFileChange}
+											disabled={isPublished}
+											className={styles.fileInput}
+										/>
+									</div>
+								)}
+								<div className={styles.pdfActions}>
+									{pdfPath ? (
+										<>
+											<button
+												type="button"
+												onClick={handleGetPdfUrl}
+												disabled={pdfLoading}
+												className={styles.viewBtn}
+											>
+												{pdfLoading
+													? "Loading..."
+													: "View PDF"}
+											</button>
+
+											{/* Retry Upload button for IDLE or FAILED status */}
+											{uploadWorkerStatus ===
+												"FAILED" && (
+												<button
+													type="button"
+													onClick={() => {}}
+													disabled={pdfLoading}
+													className={styles.uploadBtn}
+												>
+													Retry Upload
+												</button>
+											)}
+										</>
+									) : (
 										<button
 											type="button"
-											onClick={handleUpdatePdf}
-											disabled={pdfLoading}
-											className={styles.updateBtn}
+											onClick={handleUploadPdf}
+											disabled={pdfLoading || !pdfFile}
+											className={styles.uploadBtn}
 										>
 											{pdfLoading
-												? "Updating..."
-												: "Update PDF"}
+												? "Uploading..."
+												: "Upload PDF"}
 										</button>
 									)}
-									<button
-										type="button"
-										onClick={handleDeletePdf}
-										disabled={pdfLoading}
-										className={styles.deletePdfBtn}
-									>
-										{pdfLoading
-											? "Deleting..."
-											: "Delete PDF"}
-									</button>
-								</>
-							) : (
-								<button
-									type="button"
-									onClick={handleUploadPdf}
-									disabled={pdfLoading || !pdfFile}
-									className={styles.uploadBtn}
-								>
-									{pdfLoading ? "Uploading..." : "Upload PDF"}
-								</button>
-							)}
-						</div>
-						{pdfPath && (
-							<div className={styles.pdfPath}>
-								<small>Current file: {pdfPath}</small>
-							</div>
+								</div>
+								{pdfPath && (
+									<div className={styles.pdfPath}>
+										<small>Current file: {pdfPath}</small>
+									</div>
+								)}
+							</>
 						)}
 					</div>
 
@@ -772,23 +563,29 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 					</div>
 
 					<div className={styles.actions}>
-						<button
-							type="button"
-							onClick={handleDelete}
-							className={styles.deleteBtn}
-							disabled={loading || isPublished}
-						>
-							Delete
-						</button>
-						<div className={styles.rightActions}>
+						{/* Delete button - only shown when status is IDLE or SUCCESS */}
+						{showActionButton && (
 							<button
-								type="submit"
+								type="button"
+								onClick={handleDelete}
+								className={styles.deleteBtn}
 								disabled={loading || isPublished}
-								className={styles.submitBtn}
 							>
-								{loading ? "Saving..." : "Save Changes"}
+								Delete
 							</button>
-						</div>
+						)}
+
+						{showActionButton && (
+							<div className={styles.rightActions}>
+								<button
+									type="submit"
+									disabled={loading || isPublished}
+									className={styles.submitBtn}
+								>
+									{loading ? "Saving..." : "Save Changes"}
+								</button>
+							</div>
+						)}
 					</div>
 				</form>
 			</main>

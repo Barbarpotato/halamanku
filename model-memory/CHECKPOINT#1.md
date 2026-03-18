@@ -32,8 +32,7 @@ CREATE TABLE ebook_template (
     repository_name varchar(250),
     branch_name varchar(250),
     file_path varchar(250),
-    is_premium boolean,
-    template_name varchar(250)  -- Added later
+    template_name varchar(250)
 );
 
 -- ebook_user_content: Stores user's ebook content
@@ -46,11 +45,10 @@ CREATE TABLE ebook_user_content (
     ebook_user_content_description text,
     ebook_template_id integer,
     ebook_template_preview_code text,
-    template_primary_background_color varchar(250),
-    template_secondary_background_color varchar(250),
-    template_text_color varchar(250),
-    template_heading_text varchar(250),
-    supabase_file_storage_url text,
+    storage_file_name varchar,
+    storage_bucket_name varchar,
+    cover_image_url varchar,
+    upload_worker_status enum_types (IDLE, PROCESSING, SUCCESS, FAILED),
     publish_site_url text,
     is_published boolean,
     published_date timestamptz

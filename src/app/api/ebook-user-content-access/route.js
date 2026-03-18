@@ -36,34 +36,40 @@ export async function GET(request) {
 		const { searchParams } = new URL(request.url);
 
 		const contentNumber = searchParams.get("content_number");
-		const emailAddress = searchParams.get("email_address");
 
-		// forece contentNumber or emailAddress
-		if (!contentNumber && !emailAddress) {
-			return jsonResponse({ error: "Invalid request" }, 400);
+		// ❌ REMOVE email from query — never trust client input
+		if (!contentNumber) {
+			return jsonResponse({ error: "content_number required" }, 400);
 		}
 
-		let query = supabase.from("ebook_user_content_access").select(`
-        *,
-        ebook_user_content:ebook_user_content_id(
-          id,
-          ebook_user_content_number,
-          ebook_user_content_title,
-          publish_site_url,
-          is_published,
-		  supabase_file_storage_url
-        )
-      `);
-
-		if (contentNumber) {
-			query = query.eq("ebook_user_content_number", contentNumber);
+		// 🔐 1. Get access token from header
+		const authHeader = request.headers.get("authorization");
+		if (!authHeader || !authHeader.startsWith("Bearer ")) {
+			return jsonResponse({ error: "Unauthorized" }, 401);
 		}
 
-		if (emailAddress) {
-			query = query.eq("email_address", emailAddress);
+		const token = authHeader.replace("Bearer ", "");
+
+		// 🔐 2. Validate token with Supabase
+		const {
+			data: { user },
+			error: authError,
+		} = await supabase.auth.getUser(token);
+
+		if (authError || !user) {
+			return jsonResponse({ error: "Invalid token" }, 401);
 		}
 
-		const { data, error } = await query.order("created", {
+		const emailAddress = user.email;
+
+		// 🧠 3. Query using VERIFIED identity
+		let query = supabase.from("ebook_user_content_access").select("*");
+
+		query = query
+			.eq("ebook_user_content_number", contentNumber)
+			.eq("email_address", emailAddress);
+
+		const { _data, error } = await query.order("created", {
 			ascending: false,
 		});
 
@@ -71,115 +77,8 @@ export async function GET(request) {
 			return jsonResponse({ error: error.message }, 400);
 		}
 
-		return jsonResponse(data);
-	} catch (error) {
-		return jsonResponse({ error: error.message }, 500);
-	}
-}
-
-// -----------------------------
-// POST
-// -----------------------------
-export async function POST(request) {
-	try {
-		const body = await request.json();
-
-		const {
-			ebook_user_content_id,
-			ebook_user_content_number,
-			auth_user_id,
-			email_address,
-			lynk_id_reference_id,
-		} = body;
-
-		const { data, error } = await supabase
-			.from("ebook_user_content_access")
-			.insert([
-				{
-					ebook_user_content_id,
-					ebook_user_content_number,
-					auth_user_id,
-					email_address,
-					lynk_id_reference_id,
-				},
-			])
-			.select()
-			.single();
-
-		if (error) {
-			return jsonResponse({ error: error.message }, 400);
-		}
-
-		return jsonResponse(data, 201);
-	} catch (error) {
-		return jsonResponse({ error: error.message }, 500);
-	}
-}
-
-// -----------------------------
-// PUT
-// -----------------------------
-export async function PUT(request) {
-	try {
-		const { searchParams } = new URL(request.url);
-		const id = searchParams.get("id");
-
-		if (!id) {
-			return jsonResponse({ error: "ID is required" }, 400);
-		}
-
-		const body = await request.json();
-
-		const {
-			ebook_user_content_number,
-			email_address,
-			lynk_id_reference_id,
-		} = body;
-
-		const { data, error } = await supabase
-			.from("ebook_user_content_access")
-			.update({
-				ebook_user_content_number,
-				email_address,
-				lynk_id_reference_id,
-			})
-			.eq("id", id)
-			.select()
-			.single();
-
-		if (error) {
-			return jsonResponse({ error: error.message }, 400);
-		}
-
-		return jsonResponse(data);
-	} catch (error) {
-		return jsonResponse({ error: error.message }, 500);
-	}
-}
-
-// -----------------------------
-// DELETE
-// -----------------------------
-export async function DELETE(request) {
-	try {
-		const { searchParams } = new URL(request.url);
-		const id = searchParams.get("id");
-
-		if (!id) {
-			return jsonResponse({ error: "ID is required" }, 400);
-		}
-
-		const { error } = await supabase
-			.from("ebook_user_content_access")
-			.delete()
-			.eq("id", id);
-
-		if (error) {
-			return jsonResponse({ error: error.message }, 400);
-		}
-
 		return jsonResponse({
-			message: "Access record deleted successfully",
+			status: "SUCCESS",
 		});
 	} catch (error) {
 		return jsonResponse({ error: error.message }, 500);
