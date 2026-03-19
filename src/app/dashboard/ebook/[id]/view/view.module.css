@@ -261,3 +261,43 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+
+.liveLink {
+	display: block;
+	margin-top: 12px;
+	padding: 10px 16px;
+	background: #dcfce7;
+	border: 1px solid #86efac;
+	border-radius: 8px;
+	color: #166534;
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	text-align: center;
+}
+
+.liveLink:hover {
+	background: #bbf7d0;
+	color: #15803d;
+}
+
+
+.liveLink {
+	display: block;
+	margin-top: 12px;
+	padding: 10px 16px;
+	background: #dcfce7;
+	border: 1px solid #86efac;
+	border-radius: 8px;
+	color: #166534;
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	text-align: center;
+}
+
+.liveLink:hover {
+	background: #bbf7d0;
+	color: #15803d;
+}

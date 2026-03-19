@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import ViewEbookContent from "./ViewEbookContent";
+import ViewEbookForm from "./ViewEbookForm";
 
 export default async function ViewEbookPage({ params }) {
 	const supabase = await createClient();
-	const { id } = params;
+	const { id } = await params;
 
 	const {
 		data: { user },
@@ -25,32 +25,30 @@ export default async function ViewEbookPage({ params }) {
 		redirect("/login");
 	}
 
-	// Get the ebook content with template info
-	const { data: content } = await supabase
+	// Get the ebook content
+	const { data: content, error: contentError } = await supabase
 		.from("ebook_user_content")
-		.select(
-			`
-      *,
-      ebook_template:ebook_template_id(
-        id,
-        owner_name,
-        repository_name,
-        branch_name,
-        file_path,
-        is_premium,
-		template_name
-      )
-    `,
-		)
+		.select("*")
 		.eq("id", id)
 		.eq("ebook_user_id", ebookUser.id)
 		.single();
 
-	if (!content) {
+	if (contentError || !content) {
 		redirect("/dashboard");
 	}
 
+	// Get templates for the view
+	const { data: templates } = await supabase
+		.from("ebook_template")
+		.select("*")
+		.order("created", { ascending: false });
+
 	return (
-		<ViewEbookContent user={user} ebookUser={ebookUser} content={content} />
+		<ViewEbookForm
+			user={user}
+			ebookUser={ebookUser}
+			content={content}
+			templates={templates || []}
+		/>
 	);
 }

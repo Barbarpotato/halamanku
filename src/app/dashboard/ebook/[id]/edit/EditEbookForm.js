@@ -6,8 +6,17 @@ import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import styles from "../../new/new.module.css";
 
+// Components
+import TabActions from "./components/TabActions";
+import BasicInfoTab from "./components/BasicInfoTab";
+import PdfTab from "./components/PdfTab";
+import PreviewTab from "./components/PreviewTab";
+
 const STORAGE_URL =
 	"https://stzieqkgyktsrtauytmu.supabase.co/functions/v1/ebook-storage-service";
+
+const WORKFLOW_SERVICE_URL =
+	"https://stzieqkgyktsrtauytmu.supabase.co/functions/v1/ebook-workflow-service";
 
 export default function EditEbookForm({ user, ebookUser, content, templates }) {
 	const router = useRouter();
@@ -16,52 +25,17 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 	const [error, setError] = useState(null);
 	const fileInputRef = useRef(null);
 
+	// Tab state
+	const [activeTab, setActiveTab] = useState("basic");
+
 	// PDF file state
 	const [pdfFile, setPdfFile] = useState(null);
 	const [pdfPath, setPdfPath] = useState(content.storage_file_name || "");
 	const [pdfLoading, setPdfLoading] = useState(false);
 	const [pdfError, setPdfError] = useState(null);
 
-	// Upload worker status - will be updated via polling
-	const [uploadWorkerStatus, setUploadWorkerStatus] = useState(
-		content.upload_worker_status || "IDLE",
-	);
-
-	// Poll for upload worker status
-	const { data: statusData, isLoading: statusLoading } = useQuery({
-		queryKey: ["uploadWorkerStatus", content.id],
-		queryFn: async () => {
-			const { data, error } = await supabase
-				.from("ebook_user_content")
-				.select("upload_worker_status")
-				.eq("id", content.id)
-				.single();
-
-			if (error) {
-				return null;
-			}
-
-			return data?.upload_worker_status || "IDLE";
-		},
-		refetchInterval: 2000, // Poll every 2 seconds
-		enabled:
-			uploadWorkerStatus !== "SUCCESS" || uploadWorkerStatus !== "FAILED",
-	});
-
-	// Update local state when polling returns new status
-	useEffect(() => {
-		if (statusData) {
-			setUploadWorkerStatus(statusData);
-		}
-	}, [statusData]);
-
-	// Determine if we should show loader (not IDLE or SUCCESS)
-	const showLoader =
-		uploadWorkerStatus !== "IDLE" && uploadWorkerStatus !== "SUCCESS";
-
-	// Determine if delete button should be visible
-	const showActionButton =
-		uploadWorkerStatus === "IDLE" || uploadWorkerStatus === "SUCCESS";
+	// Preview creation state
+	const [creatingPreview, setCreatingPreview] = useState(false);
 
 	const [formData, setFormData] = useState({
 		ebook_template_id: content.ebook_template_id || "",
@@ -73,8 +47,123 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 		is_published: content.is_published || false,
 	});
 
-	// Check if ebook is already published
-	const isPublished = formData.is_published;
+	// Upload worker status - will be updated via polling
+	const [uploadWorkerStatus, setUploadWorkerStatus] = useState(
+		content.upload_worker_status || "IDLE",
+	);
+
+	// Preview worker status - will be updated via polling
+	const [previewWorkerStatus, setPreviewWorkerStatus] = useState(
+		content.preview_worker_status || "IDLE",
+	);
+
+	const [publishWorkerStatus, setPublishWorkerStatus] = useState(
+		content.publish_worker_status || "IDLE",
+	);
+
+	const [publishing, setPublishing] = useState(false);
+
+	// ✅ SINGLE SOURCE OF TRUTH
+	const { data: workerData } = useQuery({
+		queryKey: ["ebookWorkerStatus", content.id],
+		queryFn: async () => {
+			const { data, error } = await supabase
+				.from("ebook_user_content")
+				.select(
+					`
+					upload_worker_status,
+					preview_worker_status,
+					publish_worker_status
+					`,
+				)
+				.eq("id", content.id)
+				.single();
+
+			if (error) return null;
+
+			return {
+				upload: data.upload_worker_status || "IDLE",
+				preview: data.preview_worker_status || "IDLE",
+				publish: data.publish_worker_status || "IDLE",
+			};
+		},
+
+		refetchInterval: (data) => {
+			if (!data) return 2000;
+
+			const uploadDone =
+				data.upload === "SUCCESS" || data.upload === "FAILED";
+			const previewDone =
+				data.preview === "SUCCESS" || data.preview === "FAILED";
+			const publishDone =
+				data.publish === "SUCCESS" || data.publish === "FAILED";
+
+			// stop polling if both done
+			if (uploadDone && previewDone && publishDone) return false;
+
+			return 2000;
+		},
+	});
+
+	useEffect(() => {
+		if (!workerData) return;
+
+		setUploadWorkerStatus(workerData.upload);
+		setPreviewWorkerStatus(workerData.preview);
+		setPublishWorkerStatus(workerData.publish);
+
+		// stop preview loading
+		if (workerData.preview !== "IDLE") {
+			setCreatingPreview(false);
+		}
+
+		// stop publish loading
+		if (workerData.publish !== "IDLE") {
+			setPublishing(false);
+		}
+
+		if (
+			workerData.upload === "SUCCESS" ||
+			workerData.preview === "SUCCESS" ||
+			workerData.publish === "SUCCESS"
+		) {
+			router.refresh();
+		}
+	}, [workerData]);
+
+	// Determine if we should show loader (not IDLE or SUCCESS)
+	const showLoader =
+		uploadWorkerStatus !== "IDLE" && uploadWorkerStatus !== "SUCCESS";
+
+	// Determine if we should show preview loader
+	const showPreviewLoader =
+		creatingPreview ||
+		(previewWorkerStatus !== "IDLE" &&
+			previewWorkerStatus !== "SUCCESS" &&
+			previewWorkerStatus !== "FAILED");
+
+	const showPublishLoader =
+		publishing ||
+		(publishWorkerStatus !== "IDLE" &&
+			publishWorkerStatus !== "SUCCESS" &&
+			publishWorkerStatus !== "FAILED");
+
+	// Determine if delete button should be visible
+	// Delete button: only visible if upload_worker_status == IDLE, FAILED OR SUCCESS
+	const showDeleteButton =
+		uploadWorkerStatus === "IDLE" ||
+		uploadWorkerStatus === "FAILED" ||
+		uploadWorkerStatus === "SUCCESS";
+
+	// Publish button: only visible if PDF exists (storage_file_name is not null)
+	const showPublishButton =
+		!!content.storage_file_name && content.is_published === false;
+
+	// Preview tab: only visible if storage_file_name != null AND upload_worker_status == SUCCESS
+	const showPreviewTab =
+		content.storage_file_name != null && uploadWorkerStatus === "SUCCESS";
+
+	const isPublished = content.is_published === true;
 
 	const handleChange = (e) => {
 		const { name, value, type, checked } = e.target;
@@ -131,7 +220,6 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 			if (result.status === "SUCCESS") {
 				const path = result.data.path;
 				setPdfPath(path);
-				// Save the path to database
 				await supabase
 					.from("ebook_user_content")
 					.update({
@@ -174,7 +262,6 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 			const result = await response.json();
 
 			if (result.status === "SUCCESS") {
-				// Open the signed URL in a new tab
 				window.open(result.data.signedUrl, "_blank");
 			} else {
 				throw new Error(result.error || "Failed to get URL");
@@ -208,7 +295,6 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 				is_published: formData.is_published,
 			};
 
-			// Handle published date
 			if (formData.is_published !== content.is_published) {
 				updateData.published_date = formData.is_published
 					? new Date().toISOString()
@@ -240,7 +326,6 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 		setError(null);
 
 		try {
-			// Check if there's a PDF file to delete from storage
 			if (content.storage_file_name) {
 				const formData = new FormData();
 				formData.append("path", content.storage_file_name);
@@ -256,7 +341,6 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 				const result = await response.json();
 
 				if (result.status !== "SUCCESS") {
-					// Log error but continue with database deletion
 					console.error(
 						"Failed to delete file from storage:",
 						result.error,
@@ -264,7 +348,18 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 				}
 			}
 
-			// Delete the database record
+			const { error: deleteEbookContentAccess } = await supabase
+				.from("ebook_user_content_access")
+				.delete()
+				.eq(
+					"ebook_user_content_number",
+					content.ebook_user_content_number,
+				);
+
+			if (deleteEbookContentAccess) {
+				throw deleteEbookContentAccess;
+			}
+
 			const { error: deleteError } = await supabase
 				.from("ebook_user_content")
 				.delete()
@@ -282,38 +377,107 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 		}
 	};
 
-	// Publish ebook
 	const handlePublish = async () => {
 		if (!confirm("Are you sure you want to publish this ebook?")) return;
 
-		setLoading(true);
+		setPublishing(true);
 		setError(null);
 
 		try {
-			const { error: publishError } = await supabase
-				.from("ebook_user_content")
-				.update({
-					is_published: true,
-					published_date: new Date().toISOString(),
-				})
-				.eq("id", content.id);
+			const { data: templateData, error: templateError } = await supabase
+				.from("ebook_template")
+				.select("template_name")
+				.eq("id", content.ebook_template_id)
+				.single();
 
-			if (publishError) {
-				throw publishError;
+			if (templateError || !templateData) {
+				throw new Error(templateError?.message || "Template not found");
 			}
 
-			// Update local state
-			setFormData((prev) => ({
-				...prev,
-				is_published: true,
-			}));
+			await fetch(WORKFLOW_SERVICE_URL, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${getAnonKey()}`,
+				},
+				body: JSON.stringify({
+					new_repo: formData.ebook_user_content_number,
+					event_type: "publish-ebook-site",
+					content_number: formData.ebook_user_content_number,
+					total_pages: content.storage_file_total_page,
+					template_name: templateData.template_name,
+				}),
+			});
 
-			router.refresh();
-			alert("Ebook published successfully!");
+			alert(
+				"Ebook is being published. Please Wait for a while to see your page",
+			);
 		} catch (err) {
 			setError(err.message);
-		} finally {
-			setLoading(false);
+			setPublishing(false);
+		}
+	};
+
+	const handleCreatePreview = async () => {
+		setCreatingPreview(true);
+		setError(null);
+
+		try {
+			const { data: templateData, error: templateError } = await supabase
+				.from("ebook_template")
+				.select("template_name")
+				.eq("id", content.ebook_template_id)
+				.single();
+
+			if (templateError || !templateData) {
+				throw new Error(templateError?.message || "Template not found");
+			}
+
+			const response = await fetch(WORKFLOW_SERVICE_URL, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${getAnonKey()}`,
+				},
+				body: JSON.stringify({
+					event_type: "preview-ebook-site",
+					content_number: formData.ebook_user_content_number,
+					total_pages: content.storage_file_total_page,
+					template_name: templateData.template_name,
+				}),
+			});
+
+			const result = await response.json();
+
+			if (result.status === "SUCCESS") {
+				const { error: accessError } = await supabase
+					.from("ebook_user_content_access")
+					.insert({
+						ebook_user_content_id: content.id,
+						ebook_user_content_number:
+							formData.ebook_user_content_number,
+						auth_user_id: user.id,
+						email_address: user.email,
+						lynk_id_reference_id: null,
+						storage_shard_name: content.storage_file_name.replace(
+							".pdf",
+							"",
+						),
+					});
+
+				if (accessError) {
+					console.error(
+						"Failed to create access record:",
+						accessError,
+					);
+				}
+
+				router.refresh();
+			} else {
+				throw new Error(result.error || "Failed to create preview");
+			}
+		} catch (err) {
+			setError(err.message);
 		}
 	};
 
@@ -360,16 +524,28 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 						<h1>Edit Ebook</h1>
 						<p>Update your ebook details</p>
 					</div>
-					<div className={styles.headerActions}>
-						<button
-							type="button"
-							onClick={handlePublish}
-							className={styles.publishBtn}
-							disabled={loading || formData.is_published}
-						>
-							{formData.is_published ? "Published" : "Publish"}
-						</button>
-					</div>
+
+					{/* Header Actions: Delete, Publish, Create Preview */}
+					<TabActions
+						showPublishButton={showPublishButton}
+						showDeleteButton={showDeleteButton}
+						formData={formData}
+						loading={loading}
+						isPublished={isPublished}
+						creatingPreview={creatingPreview}
+						onPublish={handlePublish}
+						publishing={publishing}
+						publishWorkerStatus={publishWorkerStatus}
+						showPublishLoader={showPublishLoader}
+						onCreatePreview={handleCreatePreview}
+						onDelete={handleDelete}
+						workerData={workerData}
+						content={{
+							...content,
+							ebook_user: ebookUser,
+						}}
+						user={user}
+					/>
 				</div>
 
 				<form onSubmit={handleSubmit} className={styles.form}>
@@ -381,212 +557,71 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 						value={formData.template_preview_code}
 					/>
 
-					<div className={styles.section}>
-						<h2>Basic Information</h2>
-						<div className={styles.grid}>
-							<div className={styles.field}>
-								<label htmlFor="ebook_template_id">
-									Template
-								</label>
-								<select
-									id="ebook_template_id"
-									name="ebook_template_id"
-									value={formData.ebook_template_id}
-									onChange={handleChange}
-								>
-									<option value="">Select a template</option>
-									{templates.map((template) => (
-										<option
-											key={template.id}
-											value={template.id}
-										>
-											{template.template_name}
-										</option>
-									))}
-								</select>
-							</div>
-						</div>
-						<div className={styles.field}>
-							<label htmlFor="ebook_user_content_title">
-								Title
-							</label>
-							<input
-								type="text"
-								id="ebook_user_content_title"
-								name="ebook_user_content_title"
-								value={formData.ebook_user_content_title}
-								onChange={handleChange}
-								placeholder="Enter ebook title"
-								disabled={isPublished}
-							/>
-						</div>
-						<div className={styles.field}>
-							<label htmlFor="ebook_user_content_description">
-								Description
-							</label>
-							<textarea
-								id="ebook_user_content_description"
-								name="ebook_user_content_description"
-								value={formData.ebook_user_content_description}
-								onChange={handleChange}
-								rows={4}
-								placeholder="Enter ebook description"
-								disabled={isPublished}
-							/>
-						</div>
-					</div>
-
-					<div className={styles.section}>
-						<h2>PDF File</h2>
-						{/* Loader - shown when status is PROCESSING or FAILED */}
-						{showLoader && (
-							<div className={styles.loaderContainer}>
-								<div className={styles.loaderSpinner}></div>
-								<p className={styles.loaderText}>
-									Please wait until the pdf upload is done
-								</p>
-								<p className={styles.loaderStatus}>
-									Current status: {uploadWorkerStatus}
-								</p>
-							</div>
-						)}
-
-						{/* PDF File Section - hidden when showLoader is true */}
-						{!showLoader && (
-							<>
-								{pdfError && (
-									<div
-										className={styles.error}
-										style={{ marginBottom: "16px" }}
-									>
-										{pdfError}
-									</div>
-								)}
-								{/* Show file input only if no file is uploaded yet */}
-								{!pdfPath && (
-									<div className={styles.field}>
-										<label htmlFor="pdf_file">
-											Upload PDF File
-										</label>
-										<input
-											type="file"
-											id="pdf_file"
-											ref={fileInputRef}
-											accept=".pdf"
-											onChange={handleFileChange}
-											disabled={isPublished}
-											className={styles.fileInput}
-										/>
-									</div>
-								)}
-								<div className={styles.pdfActions}>
-									{pdfPath ? (
-										<>
-											<button
-												type="button"
-												onClick={handleGetPdfUrl}
-												disabled={pdfLoading}
-												className={styles.viewBtn}
-											>
-												{pdfLoading
-													? "Loading..."
-													: "View PDF"}
-											</button>
-
-											{/* Retry Upload button for IDLE or FAILED status */}
-											{uploadWorkerStatus ===
-												"FAILED" && (
-												<button
-													type="button"
-													onClick={() => {}}
-													disabled={pdfLoading}
-													className={styles.uploadBtn}
-												>
-													Retry Upload
-												</button>
-											)}
-										</>
-									) : (
-										<button
-											type="button"
-											onClick={handleUploadPdf}
-											disabled={pdfLoading || !pdfFile}
-											className={styles.uploadBtn}
-										>
-											{pdfLoading
-												? "Uploading..."
-												: "Upload PDF"}
-										</button>
-									)}
-								</div>
-								{pdfPath && (
-									<div className={styles.pdfPath}>
-										<small>Current file: {pdfPath}</small>
-									</div>
-								)}
-							</>
-						)}
-					</div>
-
-					<div className={styles.section}>
-						<h2>Preview</h2>
-						<a
-							href={`/dashboard/ebook/${content.id}/preview`}
-							target="_blank"
-							rel="noopener noreferrer"
-							className={styles.previewBtn}
+					{/* Tabs Navigation */}
+					<div className={styles.tabsContainer}>
+						<button
+							type="button"
+							className={`${styles.tabButton} ${activeTab === "basic" ? styles.active : ""}`}
+							onClick={() => setActiveTab("basic")}
 						>
-							<svg
-								width="20"
-								height="20"
-								viewBox="0 0 24 24"
-								fill="none"
-								xmlns="http://www.w3.org/2000/svg"
-							>
-								<path
-									d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-									stroke="currentColor"
-									strokeWidth="2"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								/>
-								<path
-									d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-									stroke="currentColor"
-									strokeWidth="2"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								/>
-							</svg>
-							Open Preview
-						</a>
-					</div>
-
-					<div className={styles.actions}>
-						{/* Delete button - only shown when status is IDLE or SUCCESS */}
-						{showActionButton && (
+							Basic Information
+						</button>
+						<button
+							type="button"
+							className={`${styles.tabButton} ${activeTab === "pdf" ? styles.active : ""}`}
+							onClick={() => setActiveTab("pdf")}
+						>
+							PDF
+						</button>
+						{showPreviewTab && (
 							<button
 								type="button"
-								onClick={handleDelete}
-								className={styles.deleteBtn}
-								disabled={loading || isPublished}
+								className={`${styles.tabButton} ${activeTab === "preview" ? styles.active : ""}`}
+								onClick={() => setActiveTab("preview")}
 							>
-								Delete
+								Preview
 							</button>
 						)}
-
-						{showActionButton && (
-							<div className={styles.rightActions}>
-								<button
-									type="submit"
-									disabled={loading || isPublished}
-									className={styles.submitBtn}
-								>
-									{loading ? "Saving..." : "Save Changes"}
-								</button>
-							</div>
-						)}
 					</div>
+
+					{/* Basic Information Tab */}
+					<BasicInfoTab
+						isActive={activeTab === "basic"}
+						formData={formData}
+						handleChange={handleChange}
+						isPublished={isPublished}
+						templates={templates}
+						loading={loading}
+					/>
+
+					{/* PDF Tab */}
+					<PdfTab
+						isActive={activeTab === "pdf"}
+						pdfFile={pdfFile}
+						pdfPath={pdfPath}
+						pdfLoading={pdfLoading}
+						pdfError={pdfError}
+						uploadWorkerStatus={uploadWorkerStatus}
+						showLoader={showLoader}
+						isPublished={isPublished}
+						handleFileChange={handleFileChange}
+						handleUploadPdf={handleUploadPdf}
+						handleGetPdfUrl={handleGetPdfUrl}
+						fileInputRef={fileInputRef}
+					/>
+
+					{/* Preview Tab */}
+					{showPreviewTab && (
+						<PreviewTab
+							contentId={content.id}
+							isActive={activeTab === "preview"}
+							previewCode={content.ebook_template_preview_code}
+							creatingPreview={creatingPreview}
+							onCreatePreview={handleCreatePreview}
+							previewWorkerStatus={previewWorkerStatus}
+							showPreviewLoader={showPreviewLoader}
+						/>
+					)}
 				</form>
 			</main>
 		</div>

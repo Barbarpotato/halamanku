@@ -8,6 +8,7 @@ import styles from "./new.module.css";
 export default function NewEbookForm({ user, ebookUser, templates }) {
 	const router = useRouter();
 	const supabase = createClient();
+
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 
@@ -20,47 +21,64 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
-		setFormData((prev) => ({ ...prev, [name]: value }));
+
+		setFormData((prev) => ({
+			...prev,
+			[name]: value,
+		}));
+	};
+
+	// 🔒 HARD VALIDATION (no weak logic)
+	const validateForm = () => {
+		if (
+			!formData.ebook_template_id ||
+			formData.ebook_template_id.trim() === ""
+		) {
+			return "Template is required";
+		}
+
+		if (!formData.ebook_user_content_title.trim()) {
+			return "Title is required";
+		}
+
+		if (!formData.ebook_user_content_description.trim()) {
+			return "Description is required";
+		}
+
+		if (!ebookUser || !ebookUser.id) {
+			return "Invalid user";
+		}
+
+		return null;
 	};
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		setLoading(true);
+
+		if (loading) return;
+
 		setError(null);
 
+		// 🚨 STEP 1: VALIDATE FIRST
+		const validationError = validateForm();
+		if (validationError) {
+			setError(validationError);
+			return;
+		}
+
+		setLoading(true);
+
 		try {
-			// If template is selected, fetch template data first
-			let templatePreviewCode = null;
-			if (formData.ebook_template_id) {
-				const { data: templateData, error: templateError } =
-					await supabase
-						.from("ebook_template")
-						.select("raw_githubusercontent_url")
-						.eq("id", formData.ebook_template_id)
-						.single();
+			const templateId = formData.ebook_template_id.trim();
 
-				if (templateError) {
-					throw new Error("Template not found");
-				}
+			const { data: templateData, error: templateError } = await supabase
+				.from("ebook_template")
+				.select("raw_githubusercontent_url")
+				.eq("id", templateId)
+				.single();
 
-				if (templateData?.raw_githubusercontent_url) {
-					// Fetch the actual content from the GitHub URL
-					try {
-						const response = await fetch(
-							templateData.raw_githubusercontent_url,
-						);
-						if (!response.ok) {
-							throw new Error("Failed to fetch template content");
-						}
-						const content = await response.text();
-						templatePreviewCode = content;
-					} catch (fetchError) {
-						throw new Error(
-							"Failed to fetch template content: " +
-								fetchError.message,
-						);
-					}
-				}
+			if (templateError || !templateData) {
+				throw new Error("Template not found");
 			}
 
 			const { data, error: insertError } = await supabase
@@ -68,14 +86,13 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 				.insert([
 					{
 						ebook_user_id: ebookUser.id,
-						ebook_template_id: formData.ebook_template_id || null,
+						ebook_template_id: templateId,
 						ebook_user_content_number:
 							formData.ebook_user_content_number,
 						ebook_user_content_title:
-							formData.ebook_user_content_title,
+							formData.ebook_user_content_title.trim(),
 						ebook_user_content_description:
-							formData.ebook_user_content_description,
-						ebook_template_preview_code: templatePreviewCode,
+							formData.ebook_user_content_description.trim(),
 						is_published: false,
 					},
 				])
@@ -86,9 +103,10 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 				throw insertError;
 			}
 
+			// 🚀 STEP 5: NAVIGATE
 			router.push(`/dashboard/ebook/${data.id}/edit`);
 		} catch (err) {
-			setError(err.message);
+			setError(err.message || "Something went wrong");
 		} finally {
 			setLoading(false);
 		}
@@ -96,41 +114,6 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 
 	return (
 		<div className={styles.container}>
-			<header className={styles.header}>
-				<div className={styles.headerContent}>
-					<div className={styles.logo}>
-						<svg
-							width="32"
-							height="32"
-							viewBox="0 0 24 24"
-							fill="none"
-							xmlns="http://www.w3.org/2000/svg"
-						>
-							<path
-								d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-							<path
-								d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-						</svg>
-						<span>Ebook Admin</span>
-					</div>
-					<div className={styles.breadcrumb}>
-						<a href="/dashboard">Dashboard</a>
-						<span>/</span>
-						<span>New Ebook</span>
-					</div>
-				</div>
-			</header>
-
 			<main className={styles.main}>
 				<div className={styles.pageHeader}>
 					<h1>Create New Ebook</h1>
@@ -142,40 +125,35 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 
 					<div className={styles.section}>
 						<h2>Basic Information</h2>
-						<div className={styles.grid}>
-							<input
-								type="hidden"
-								id="ebook_user_content_number"
-								name="ebook_user_content_number"
-								value={formData.ebook_user_content_number}
-								disabled
-								required
-							/>
-							<div className={styles.field}>
-								<label htmlFor="ebook_template_id">
-									Template
-								</label>
-								<select
-									id="ebook_template_id"
-									name="ebook_template_id"
-									value={formData.ebook_template_id}
-									onChange={handleChange}
-								>
-									{templates.map((template) => (
-										<option
-											key={template.id}
-											value={template.id}
-										>
-											{template.template_name ||
-												`${template.owner_name}/${template.repository_name} - ${template.file_path}`}
-										</option>
-									))}
-								</select>
-							</div>
+
+						{/* TEMPLATE */}
+						<div className={styles.field}>
+							<label htmlFor="ebook_template_id">
+								Template *
+							</label>
+							<select
+								id="ebook_template_id"
+								name="ebook_template_id"
+								value={formData.ebook_template_id}
+								onChange={handleChange}
+							>
+								<option value="">-- Select Template --</option>
+								{templates.map((template) => (
+									<option
+										key={template.id}
+										value={template.id}
+									>
+										{template.template_name ||
+											`${template.owner_name}/${template.repository_name} - ${template.file_path}`}
+									</option>
+								))}
+							</select>
 						</div>
+
+						{/* TITLE */}
 						<div className={styles.field}>
 							<label htmlFor="ebook_user_content_title">
-								Title
+								Title *
 							</label>
 							<input
 								type="text"
@@ -186,9 +164,11 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 								placeholder="Enter ebook title"
 							/>
 						</div>
+
+						{/* DESCRIPTION */}
 						<div className={styles.field}>
 							<label htmlFor="ebook_user_content_description">
-								Description
+								Description *
 							</label>
 							<textarea
 								id="ebook_user_content_description"
@@ -205,6 +185,7 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 						<a href="/dashboard" className={styles.cancelBtn}>
 							Cancel
 						</a>
+
 						<button
 							type="submit"
 							disabled={loading}

@@ -49,6 +49,8 @@ CREATE TABLE ebook_user_content (
     storage_bucket_name varchar,
     cover_image_url varchar,
     upload_worker_status enum_types (IDLE, PROCESSING, SUCCESS, FAILED),
+    preview_worker_status enum_types (IDLE, PROCESSING, SUCCESS, FAILED),
+    publish_worker_status enum_types (IDLE, PROCESSING, SUCCESS, FAILED),
     publish_site_url text,
     is_published boolean,
     published_date timestamptz
@@ -62,7 +64,8 @@ CREATE TABLE ebook_user_content_access (
     ebook_user_content_number varchar(250),
     auth_user_id uuid REFERENCES auth.users(id),
     email_address varchar(250),
-    lynk_id_reference_id varchar(250)
+    lynk_id_reference_id varchar(250),
+    storage_shard_name varchar(250)
 );
 ```
 
