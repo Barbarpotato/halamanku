@@ -1,27 +1,29 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
 import styles from "../../new/new.module.css";
 
+// Services
+import { updateEbookUserContent } from "@/services/userContent/update";
+import { deleteEbookUserContent } from "@/services/userContent/delete";
+import { uploadPdf, getPdfUrl } from "@/services/userContent/pdf";
+import {
+	publishEbookUserContent,
+	createPreview,
+} from "@/services/userContent/workflow";
+import { getWorkerStatuses } from "@/services/userContent/utils";
+
 // Components
+import PageHeader from "@/components/PageHeader";
 import TabActions from "./components/TabActions";
 import BasicInfoTab from "./components/BasicInfoTab";
 import PdfTab from "./components/PdfTab";
 import PreviewTab from "./components/PreviewTab";
 
-const STORAGE_URL =
-	"https://stzieqkgyktsrtauytmu.supabase.co/functions/v1/ebook-storage-service";
-
-const WORKFLOW_SERVICE_URL =
-	"https://stzieqkgyktsrtauytmu.supabase.co/functions/v1/ebook-workflow-service";
-
 export default function EditEbookForm({ user, ebookUser, content, templates }) {
 	const router = useRouter();
-	const supabase = createClient();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 	const fileInputRef = useRef(null);
@@ -68,25 +70,7 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 	const { data: workerData } = useQuery({
 		queryKey: ["ebookWorkerStatus", content.id],
 		queryFn: async () => {
-			const { data, error } = await supabase
-				.from("ebook_user_content")
-				.select(
-					`
-					upload_worker_status,
-					preview_worker_status,
-					publish_worker_status
-					`,
-				)
-				.eq("id", content.id)
-				.single();
-
-			if (error) return null;
-
-			return {
-				upload: data.upload_worker_status || "IDLE",
-				preview: data.preview_worker_status || "IDLE",
-				publish: data.publish_worker_status || "IDLE",
-			};
+			return await getWorkerStatuses(content.id);
 		},
 
 		refetchInterval: (data) => {
@@ -188,11 +172,6 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 		}
 	};
 
-	// Get the anon key from environment
-	const getAnonKey = () => {
-		return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-	};
-
 	// Upload new PDF
 	const handleUploadPdf = async () => {
 		if (!pdfFile) {
@@ -204,35 +183,11 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 		setPdfError(null);
 
 		try {
-			const formData = new FormData();
-			formData.append("file", pdfFile);
-			formData.append("id", content.id);
-
-			const response = await fetch(STORAGE_URL, {
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${getAnonKey()}`,
-				},
-				body: formData,
-			});
-
-			const result = await response.json();
-
-			if (result.status === "SUCCESS") {
-				const path = result.data.path;
-				setPdfPath(path);
-				await supabase
-					.from("ebook_user_content")
-					.update({
-						storage_file_name: path,
-					})
-					.eq("id", content.id);
-				setPdfFile(null);
-				if (fileInputRef.current) {
-					fileInputRef.current.value = "";
-				}
-			} else {
-				throw new Error(result.error || "Upload failed");
+			const path = await uploadPdf(content.id, pdfFile);
+			setPdfPath(path);
+			setPdfFile(null);
+			if (fileInputRef.current) {
+				fileInputRef.current.value = "";
 			}
 		} catch (err) {
 			setPdfError(err.message);
@@ -252,21 +207,8 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 		setPdfError(null);
 
 		try {
-			const url = `${STORAGE_URL}?path=${encodeURIComponent(pdfPath)}`;
-			const response = await fetch(url, {
-				method: "GET",
-				headers: {
-					Authorization: `Bearer ${getAnonKey()}`,
-				},
-			});
-
-			const result = await response.json();
-
-			if (result.status === "SUCCESS") {
-				window.open(result.data.signedUrl, "_blank");
-			} else {
-				throw new Error(result.error || "Failed to get URL");
-			}
+			const signedUrl = await getPdfUrl(pdfPath);
+			window.open(signedUrl, "_blank");
 		} catch (err) {
 			setPdfError(err.message);
 		} finally {
@@ -280,37 +222,7 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 		setError(null);
 
 		try {
-			const updateData = {
-				ebook_template_id: formData.ebook_template_id || null,
-				ebook_user_content_number: formData.ebook_user_content_number,
-				ebook_user_content_title: formData.ebook_user_content_title,
-				ebook_user_content_description:
-					formData.ebook_user_content_description,
-				template_primary_background_color:
-					formData.template_primary_background_color,
-				template_secondary_background_color:
-					formData.template_secondary_background_color,
-				template_text_color: formData.template_text_color,
-				template_heading_text: formData.template_heading_text,
-				ebook_template_preview_code: formData.template_preview_code,
-				is_published: formData.is_published,
-			};
-
-			if (formData.is_published !== content.is_published) {
-				updateData.published_date = formData.is_published
-					? new Date().toISOString()
-					: null;
-			}
-
-			const { error: updateError } = await supabase
-				.from("ebook_user_content")
-				.update(updateData)
-				.eq("id", content.id);
-
-			if (updateError) {
-				throw updateError;
-			}
-
+			await updateEbookUserContent(content.id, formData);
 			router.refresh();
 			alert("Ebook updated successfully!");
 		} catch (err) {
@@ -327,49 +239,7 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 		setError(null);
 
 		try {
-			if (content.storage_file_name) {
-				const formData = new FormData();
-				formData.append("path", content.storage_file_name);
-
-				const response = await fetch(STORAGE_URL, {
-					method: "DELETE",
-					headers: {
-						Authorization: `Bearer ${getAnonKey()}`,
-					},
-					body: formData,
-				});
-
-				const result = await response.json();
-
-				if (result.status !== "SUCCESS") {
-					console.error(
-						"Failed to delete file from storage:",
-						result.error,
-					);
-				}
-			}
-
-			const { error: deleteEbookContentAccess } = await supabase
-				.from("ebook_user_content_access")
-				.delete()
-				.eq(
-					"ebook_user_content_number",
-					content.ebook_user_content_number,
-				);
-
-			if (deleteEbookContentAccess) {
-				throw deleteEbookContentAccess;
-			}
-
-			const { error: deleteError } = await supabase
-				.from("ebook_user_content")
-				.delete()
-				.eq("id", content.id);
-
-			if (deleteError) {
-				throw deleteError;
-			}
-
+			await deleteEbookUserContent(content);
 			router.push("/dashboard");
 		} catch (err) {
 			setError(err.message);
@@ -385,31 +255,7 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 		setError(null);
 
 		try {
-			const { data: templateData, error: templateError } = await supabase
-				.from("ebook_template")
-				.select("template_name")
-				.eq("id", content.ebook_template_id)
-				.single();
-
-			if (templateError || !templateData) {
-				throw new Error(templateError?.message || "Template not found");
-			}
-
-			await fetch(WORKFLOW_SERVICE_URL, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${getAnonKey()}`,
-				},
-				body: JSON.stringify({
-					new_repo: formData.ebook_user_content_number,
-					event_type: "publish-ebook-site",
-					content_number: formData.ebook_user_content_number,
-					total_pages: content.storage_file_total_page,
-					template_name: templateData.template_name,
-				}),
-			});
-
+			await publishEbookUserContent(formData, content);
 			alert(
 				"Ebook is being published. Please Wait for a while to see your page",
 			);
@@ -424,59 +270,8 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 		setError(null);
 
 		try {
-			const { data: templateData, error: templateError } = await supabase
-				.from("ebook_template")
-				.select("template_name")
-				.eq("id", content.ebook_template_id)
-				.single();
-
-			if (templateError || !templateData) {
-				throw new Error(templateError?.message || "Template not found");
-			}
-
-			const response = await fetch(WORKFLOW_SERVICE_URL, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${getAnonKey()}`,
-				},
-				body: JSON.stringify({
-					event_type: "preview-ebook-site",
-					content_number: formData.ebook_user_content_number,
-					total_pages: content.storage_file_total_page,
-					template_name: templateData.template_name,
-				}),
-			});
-
-			const result = await response.json();
-
-			if (result.status === "SUCCESS") {
-				const { error: accessError } = await supabase
-					.from("ebook_user_content_access")
-					.insert({
-						ebook_user_content_id: content.id,
-						ebook_user_content_number:
-							formData.ebook_user_content_number,
-						auth_user_id: user.id,
-						email_address: user.email,
-						lynk_id_reference_id: null,
-						storage_shard_name: content.storage_file_name.replace(
-							".pdf",
-							"",
-						),
-					});
-
-				if (accessError) {
-					console.error(
-						"Failed to create access record:",
-						accessError,
-					);
-				}
-
-				router.refresh();
-			} else {
-				throw new Error(result.error || "Failed to create preview");
-			}
+			await createPreview(formData, content, user);
+			router.refresh();
 		} catch (err) {
 			setError(err.message);
 		}
@@ -484,40 +279,12 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 
 	return (
 		<div className="page-container">
-			<header className="header">
-				<div className={styles.headerContent}>
-					<div className="logo">
-						<svg
-							width="32"
-							height="32"
-							viewBox="0 0 24 24"
-							fill="none"
-							xmlns="http://www.w3.org/2000/svg"
-						>
-							<path
-								d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-							<path
-								d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-						</svg>
-						<span>Ebook Admin</span>
-					</div>
-					<div className="breadcrumb">
-						<Link href="/dashboard">Dashboard</Link>
-						<span>/</span>
-						<span>Edit</span>
-					</div>
-				</div>
-			</header>
+			<PageHeader
+				breadcrumb={[
+					{ label: "Dashboard", href: "/dashboard" },
+					{ label: "Edit" },
+				]}
+			/>
 
 			<main className={styles.main}>
 				<div className="page-header">

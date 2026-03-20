@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getLiveUrl } from "@/services/userContent/utils";
 
 export default function TabActions({
 	showPublishButton,
@@ -27,19 +28,8 @@ export default function TabActions({
 	const isLive =
 		workerData?.publish === "SUCCESS" && content?.is_published === true;
 
-	// Get the live URL - use ebook_user_content_number and convert whitespace to hyphens for the URL
-	const getLiveUrl = () => {
-		if (
-			!content?.ebook_user_content_number ||
-			!content?.ebook_user_content_title ||
-			!content?.ebook_user?.user_number
-		) {
-			return null;
-		}
-		const contentNumber = content.ebook_user_content_number;
-		const title = content.ebook_user_content_title.replace(/\s+/g, "-");
-		return `/live/${encodeURIComponent(contentNumber)}/${encodeURIComponent(title)}`;
-	};
+	// Get the live URL
+	const liveUrl = getLiveUrl(content, content?.ebook_user);
 
 	return (
 		<div className="header-actions">
@@ -71,7 +61,7 @@ export default function TabActions({
 					<span>
 						Your Content is Live.{" "}
 						<a
-							href={getLiveUrl()}
+							href={liveUrl}
 							target="_blank"
 							rel="noopener noreferrer"
 							className="live-link"

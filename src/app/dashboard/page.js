@@ -1,48 +1,28 @@
-import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedUser, getEbookUser } from "@/services/user/auth";
+import { getEbookUserContentList } from "@/services/userContent/get";
 import { redirect } from "next/navigation";
 import DashboardContent from "./DashboardContent";
 
 export default async function DashboardPage() {
-	const supabase = await createClient();
-
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	const user = await getAuthenticatedUser();
 
 	if (!user) {
 		redirect("/login");
 	}
 
-	// Get the ebook_user data
-	const { data: ebookUser } = await supabase
-		.from("ebook_user")
-		.select("*")
-		.eq("auth_user_id", user.id)
-		.single();
+	const ebookUser = await getEbookUser(user.id);
 
-	// Get user's content
-	const { data: userContents } = await supabase
-		.from("ebook_user_content")
-		.select(
-			`
-      *,
-      ebook_template:ebook_template_id(
-        id,
-        owner_name,
-        repository_name,
-        file_path,
-		template_name
-      )
-    `,
-		)
-		.eq("ebook_user_id", ebookUser?.id)
-		.order("created", { ascending: false });
+	if (!ebookUser) {
+		redirect("/login");
+	}
+
+	const userContents = await getEbookUserContentList(ebookUser.id);
 
 	return (
 		<DashboardContent
 			user={user}
 			ebookUser={ebookUser}
-			userContents={userContents || []}
+			userContents={userContents}
 		/>
 	);
 }

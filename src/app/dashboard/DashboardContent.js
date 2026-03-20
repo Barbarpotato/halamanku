@@ -2,52 +2,12 @@
 
 import Link from "next/link";
 import styles from "./dashboard.module.css";
+import PageHeader from "@/components/PageHeader";
 
 export default function DashboardContent({ user, ebookUser, userContents }) {
 	return (
 		<div className="page-container">
-			<header className="header">
-				<div className="header-content">
-					<div className="logo">
-						<svg
-							width="32"
-							height="32"
-							viewBox="0 0 24 24"
-							fill="none"
-							xmlns="http://www.w3.org/2000/svg"
-						>
-							<path
-								d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-							<path
-								d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-						</svg>
-						<span>Ebook Admin</span>
-					</div>
-					<div className="user-info">
-						<div className="user-details">
-							<span className="user-name">
-								{ebookUser?.name || user.email}
-							</span>
-							<span className="user-email">{user.email}</span>
-						</div>
-						<form action="/auth/signout" method="post">
-							<button className="btn-logout" type="submit">
-								Sign Out
-							</button>
-						</form>
-					</div>
-				</div>
-			</header>
+			<PageHeader user={user} ebookUser={ebookUser} showUserInfo={true} />
 
 			<main className="main">
 				<div className="page-header">

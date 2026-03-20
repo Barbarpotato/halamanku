@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import styles from "../../new/new.module.css";
+
+// Services
+import { getWorkerStatuses, getLiveUrl } from "@/services/userContent/utils";
 
 // Components
+import PageHeader from "@/components/PageHeader";
 import ViewBasicInfoTab from "./components/ViewBasicInfoTab";
 import ViewPdfTab from "./components/ViewPdfTab";
 import ViewPreviewTab from "./components/ViewPreviewTab";
 
 export default function ViewEbookForm({ user, ebookUser, content, templates }) {
-	const supabase = createClient();
 	const [activeTab, setActiveTab] = useState("basic");
 
 	// Preview worker status - will be updated via polling
@@ -24,18 +24,7 @@ export default function ViewEbookForm({ user, ebookUser, content, templates }) {
 	const { data: workerData } = useQuery({
 		queryKey: ["ebookWorkerStatus", content.id],
 		queryFn: async () => {
-			const { data, error } = await supabase
-				.from("ebook_user_content")
-				.select("upload_worker_status, preview_worker_status")
-				.eq("id", content.id)
-				.single();
-
-			if (error) return null;
-
-			return {
-				upload: data.upload_worker_status || "IDLE",
-				preview: data.preview_worker_status || "IDLE",
-			};
+			return await getWorkerStatuses(content.id);
 		},
 
 		// Smart polling - stop when done
@@ -72,56 +61,17 @@ export default function ViewEbookForm({ user, ebookUser, content, templates }) {
 		content.publish_worker_status === "SUCCESS" &&
 		content.is_published === true;
 
-	// Get the live URL - updated to use content_number/title format
-	const getLiveUrl = () => {
-		if (
-			!content.ebook_user_content_number ||
-			!content.ebook_user_content_title ||
-			!ebookUser
-		) {
-			return null;
-		}
-		const contentNumber = content.ebook_user_content_number;
-		const title = content.ebook_user_content_title.replace(/\s+/g, "-");
-		return `/live/${contentNumber}/${title}`;
-	};
+	// Get the live URL
+	const liveUrl = getLiveUrl(content, ebookUser);
 
 	return (
 		<div className="page-container">
-			<header className="header">
-				<div className="header-content">
-					<div className="logo">
-						<svg
-							width="32"
-							height="32"
-							viewBox="0 0 24 24"
-							fill="none"
-							xmlns="http://www.w3.org/2000/svg"
-						>
-							<path
-								d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-							<path
-								d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-						</svg>
-						<span>Ebook Admin</span>
-					</div>
-					<div className="breadcrumb">
-						<Link href="/dashboard">Dashboard</Link>
-						<span>/</span>
-						<span>View</span>
-					</div>
-				</div>
-			</header>
+			<PageHeader
+				breadcrumb={[
+					{ label: "Dashboard", href: "/dashboard" },
+					{ label: "View" },
+				]}
+			/>
 
 			<main className="main">
 				<div className="page-header">
@@ -167,7 +117,7 @@ export default function ViewEbookForm({ user, ebookUser, content, templates }) {
 								<span>
 									Your Content is Live.{" "}
 									<a
-										href={getLiveUrl()}
+										href={liveUrl}
 										target="_blank"
 										rel="noopener noreferrer"
 										className="live-link"
