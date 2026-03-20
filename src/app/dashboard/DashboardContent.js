@@ -5,10 +5,10 @@ import styles from "./dashboard.module.css";
 
 export default function DashboardContent({ user, ebookUser, userContents }) {
 	return (
-		<div className={styles.dashboard}>
-			<header className={styles.header}>
-				<div className={styles.headerContent}>
-					<div className={styles.logo}>
+		<div className="page-container">
+			<header className="header">
+				<div className="header-content">
+					<div className="logo">
 						<svg
 							width="32"
 							height="32"
@@ -33,17 +33,15 @@ export default function DashboardContent({ user, ebookUser, userContents }) {
 						</svg>
 						<span>Ebook Admin</span>
 					</div>
-					<div className={styles.userInfo}>
-						<div className={styles.userDetails}>
-							<span className={styles.userName}>
+					<div className="user-info">
+						<div className="user-details">
+							<span className="user-name">
 								{ebookUser?.name || user.email}
 							</span>
-							<span className={styles.userEmail}>
-								{user.email}
-							</span>
+							<span className="user-email">{user.email}</span>
 						</div>
 						<form action="/auth/signout" method="post">
-							<button className={styles.logoutBtn} type="submit">
+							<button className="btn-logout" type="submit">
 								Sign Out
 							</button>
 						</form>
@@ -51,16 +49,15 @@ export default function DashboardContent({ user, ebookUser, userContents }) {
 				</div>
 			</header>
 
-			<main className={styles.main}>
-				<div className={styles.pageHeader}>
+			<main className="main">
+				<div className="page-header">
 					<div>
-						<h1>My Ebooks</h1>
-						<p>Manage your ebook content</p>
+						<h1 className="page-header-title">My Ebooks</h1>
+						<p className="page-header-description">
+							Manage your ebook content
+						</p>
 					</div>
-					<Link
-						href="/dashboard/ebook/new"
-						className={styles.createBtn}
-					>
+					<Link href="/dashboard/ebook/new" className="btn-create">
 						<svg
 							width="20"
 							height="20"
@@ -79,51 +76,48 @@ export default function DashboardContent({ user, ebookUser, userContents }) {
 				</div>
 
 				{userContents && userContents.length > 0 ? (
-					<div className={styles.contentGrid}>
+					<div className="grid-auto">
 						{userContents.map((content) => (
-							<div
-								key={content.id}
-								className={styles.contentCard}
-							>
-								<div className={styles.cardHeader}>
-									<span className={styles.contentNumber}>
+							<div key={content.id} className="content-card">
+								<div className="card-header">
+									<span className="content-number">
 										{content.ebook_user_content_number}
 									</span>
 									<span
-										className={`${styles.status} ${content.is_published ? styles.published : styles.draft}`}
+										className={`badge ${content.is_published ? "badge-published" : "badge-draft"}`}
 									>
 										{content.is_published
 											? "Published"
 											: "Draft"}
 									</span>
 								</div>
-								<h3>
+								<h3 className="page-title">
 									{content.ebook_user_content_title ||
 										"Untitled"}
 								</h3>
-								<p className={styles.description}>
+								<p className="card-description">
 									{content.ebook_user_content_description ||
 										"No description"}
 								</p>
-								<div className={styles.cardFooter}>
-									<span className={styles.template}>
+								<div className="card-footer">
+									<span className="card-template">
 										{content.ebook_template
 											?.template_name ||
 											content.ebook_template
 												?.repository_name ||
 											"None"}
 									</span>
-									<div className={styles.actions}>
+									<div className="card-actions">
 										<Link
 											href={`/dashboard/ebook/${content.id}/view`}
-											className={styles.actionBtn}
+											className="btn-action"
 										>
 											View
 										</Link>
 										{!content.is_published && (
 											<Link
 												href={`/dashboard/ebook/${content.id}/edit`}
-												className={styles.actionBtn}
+												className="btn-action"
 											>
 												Edit
 											</Link>
@@ -134,7 +128,7 @@ export default function DashboardContent({ user, ebookUser, userContents }) {
 						))}
 					</div>
 				) : (
-					<div className={styles.emptyState}>
+					<div className="empty-state">
 						<svg
 							width="64"
 							height="64"

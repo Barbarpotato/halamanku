@@ -4,43 +4,23 @@ import styles from "./live.module.css";
 export const dynamic = "force-dynamic";
 
 export default async function LivePage({ params }) {
-	const { user_number: userNumberParam, title: titleParam } = await params;
+	const { content_number: contentNumberParam, title: titleParam } =
+		await params;
 
 	// Decode and convert hyphens back to whitespace
-	const userNumber = decodeURIComponent(userNumberParam);
+	const contentNumber = decodeURIComponent(contentNumberParam);
 	const title = decodeURIComponent(titleParam).replace(/-/g, " ");
 
 	const supabase = await createClient();
 
-	// Step 1: Validate user_number from ebook_user table
-	const { data: ebookUser, error: ebookUserError } = await supabase
-		.from("ebook_user")
-		.select("id, user_number")
-		.eq("user_number", userNumber)
-		.single();
-
-	if (ebookUserError || !ebookUser) {
-		return (
-			<div className={styles.container}>
-				<div className={styles.error}>
-					<h1>Content Not Found</h1>
-					<p>
-						The requested content could not be found. Invalid user
-						number.
-					</p>
-				</div>
-			</div>
-		);
-	}
-
-	// Step 2: Validate title from ebook_user_content table
+	// Validate content_number and title from ebook_user_content table
 	const { data: content, error: contentError } = await supabase
 		.from("ebook_user_content")
 		.select(
-			"id, ebook_user_content_title, publish_site_url, is_published, publish_worker_status",
+			"id, ebook_user_content_number, ebook_user_content_title, publish_site_url, is_published, publish_worker_status",
 		)
+		.eq("ebook_user_content_number", contentNumber)
 		.eq("ebook_user_content_title", title)
-		.eq("ebook_user_id", ebookUser.id)
 		.single();
 
 	if (contentError || !content) {
@@ -56,7 +36,7 @@ export default async function LivePage({ params }) {
 		);
 	}
 
-	// Step 3: Check if content is actually published
+	// Check if content is actually published
 	if (
 		content.is_published !== true ||
 		content.publish_worker_status !== "SUCCESS"

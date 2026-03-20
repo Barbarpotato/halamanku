@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
@@ -482,10 +483,10 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 	};
 
 	return (
-		<div className={styles.container}>
-			<header className={styles.header}>
+		<div className="page-container">
+			<header className="header">
 				<div className={styles.headerContent}>
-					<div className={styles.logo}>
+					<div className="logo">
 						<svg
 							width="32"
 							height="32"
@@ -510,8 +511,8 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 						</svg>
 						<span>Ebook Admin</span>
 					</div>
-					<div className={styles.breadcrumb}>
-						<a href="/dashboard">Dashboard</a>
+					<div className="breadcrumb">
+						<Link href="/dashboard">Dashboard</Link>
 						<span>/</span>
 						<span>Edit</span>
 					</div>
@@ -519,10 +520,12 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 			</header>
 
 			<main className={styles.main}>
-				<div className={styles.pageHeader}>
+				<div className="page-header">
 					<div>
-						<h1>Edit Ebook</h1>
-						<p>Update your ebook details</p>
+						<h1 className="page-header-title">Edit Ebook</h1>
+						<p className="page-header-description">
+							Update your ebook details
+						</p>
 					</div>
 
 					{/* Header Actions: Delete, Publish, Create Preview */}
@@ -548,8 +551,8 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 					/>
 				</div>
 
-				<form onSubmit={handleSubmit} className={styles.form}>
-					{error && <div className={styles.error}>{error}</div>}
+				<form onSubmit={handleSubmit} className="form-card">
+					{error && <div className="error-message">{error}</div>}
 
 					<input
 						type="hidden"
@@ -558,17 +561,17 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 					/>
 
 					{/* Tabs Navigation */}
-					<div className={styles.tabsContainer}>
+					<div className="tabs-container">
 						<button
 							type="button"
-							className={`${styles.tabButton} ${activeTab === "basic" ? styles.active : ""}`}
+							className={`tab-button ${activeTab === "basic" ? "active" : ""}`}
 							onClick={() => setActiveTab("basic")}
 						>
 							Basic Information
 						</button>
 						<button
 							type="button"
-							className={`${styles.tabButton} ${activeTab === "pdf" ? styles.active : ""}`}
+							className={`tab-button ${activeTab === "pdf" ? "active" : ""}`}
 							onClick={() => setActiveTab("pdf")}
 						>
 							PDF
@@ -576,7 +579,7 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 						{showPreviewTab && (
 							<button
 								type="button"
-								className={`${styles.tabButton} ${activeTab === "preview" ? styles.active : ""}`}
+								className={`tab-button ${activeTab === "preview" ? "active" : ""}`}
 								onClick={() => setActiveTab("preview")}
 							>
 								Preview
@@ -584,43 +587,60 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 						)}
 					</div>
 
-					{/* Basic Information Tab */}
-					<BasicInfoTab
-						isActive={activeTab === "basic"}
-						formData={formData}
-						handleChange={handleChange}
-						isPublished={isPublished}
-						templates={templates}
-						loading={loading}
-					/>
-
-					{/* PDF Tab */}
-					<PdfTab
-						isActive={activeTab === "pdf"}
-						pdfFile={pdfFile}
-						pdfPath={pdfPath}
-						pdfLoading={pdfLoading}
-						pdfError={pdfError}
-						uploadWorkerStatus={uploadWorkerStatus}
-						showLoader={showLoader}
-						isPublished={isPublished}
-						handleFileChange={handleFileChange}
-						handleUploadPdf={handleUploadPdf}
-						handleGetPdfUrl={handleGetPdfUrl}
-						fileInputRef={fileInputRef}
-					/>
-
-					{/* Preview Tab */}
-					{showPreviewTab && (
-						<PreviewTab
-							contentId={content.id}
-							isActive={activeTab === "preview"}
-							previewCode={content.ebook_template_preview_code}
-							creatingPreview={creatingPreview}
-							onCreatePreview={handleCreatePreview}
-							previewWorkerStatus={previewWorkerStatus}
-							showPreviewLoader={showPreviewLoader}
+					{/* Tab Contents */}
+					<div
+						className={`tab-content ${activeTab === "basic" ? "active" : ""}`}
+					>
+						<BasicInfoTab
+							formData={formData}
+							handleChange={handleChange}
+							templates={templates}
 						/>
+						<div className="actions-row">
+							<button
+								type="submit"
+								disabled={loading}
+								className="btn-primary"
+							>
+								{loading ? "Saving..." : "Save Changes"}
+							</button>
+						</div>
+					</div>
+
+					<div
+						className={`tab-content ${activeTab === "pdf" ? "active" : ""}`}
+					>
+						<PdfTab
+							pdfFile={pdfFile}
+							pdfPath={pdfPath}
+							pdfLoading={pdfLoading}
+							pdfError={pdfError}
+							fileInputRef={fileInputRef}
+							handleFileChange={handleFileChange}
+							handleUploadPdf={handleUploadPdf}
+							handleGetPdfUrl={handleGetPdfUrl}
+							content={content}
+							showLoader={showLoader}
+							uploadWorkerStatus={uploadWorkerStatus}
+						/>
+					</div>
+
+					{showPreviewTab && (
+						<div
+							className={`tab-content ${activeTab === "preview" ? "active" : ""}`}
+						>
+							<PreviewTab
+								contentId={content.id}
+								isActive={activeTab === "preview"}
+								previewCode={
+									content.ebook_template_preview_code
+								}
+								creatingPreview={creatingPreview}
+								onCreatePreview={handleCreatePreview}
+								previewWorkerStatus={previewWorkerStatus}
+								showPreviewLoader={showPreviewLoader}
+							/>
+						</div>
 					)}
 				</form>
 			</main>

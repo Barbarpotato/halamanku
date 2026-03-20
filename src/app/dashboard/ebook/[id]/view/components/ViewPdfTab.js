@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import styles from "../../../new/new.module.css";
+import { useState } from "react";
 
 const STORAGE_URL =
 	"https://stzieqkgyktsrtauytmu.supabase.co/functions/v1/ebook-storage-service";
 
-export default function ViewPdfTab({ isActive, content }) {
+export default function ViewPdfTab({ content }) {
 	const [pdfLoading, setPdfLoading] = useState(false);
 	const pdfPath = content.storage_file_name;
-	const uploadWorkerStatus = content.upload_worker_status;
 
 	// Get the anon key from environment
 	const getAnonKey = () => {
@@ -46,34 +44,32 @@ export default function ViewPdfTab({ isActive, content }) {
 	};
 
 	return (
-		<div
-			className={`${styles.tabContent} ${isActive ? styles.active : ""}`}
-		>
-			<div className={styles.section}>
-				<h2>PDF File</h2>
+		<div className="mb-xl">
+			<h2 className="section-title">PDF File</h2>
 
-				{pdfPath ? (
-					<>
-						<div className={styles.pdfActions}>
-							<button
-								type="button"
-								onClick={handleGetPdfUrl}
-								disabled={pdfLoading}
-								className={styles.viewBtn}
-							>
-								{pdfLoading ? "Loading..." : "View PDF"}
-							</button>
-						</div>
-						<div className={styles.pdfPath}>
-							<small>Current file: {pdfPath}</small>
-						</div>
-					</>
-				) : (
-					<div className={styles.emptyState}>
-						<p>No PDF file uploaded yet.</p>
+			{pdfPath ? (
+				<>
+					<div className="pdf-actions">
+						<button
+							type="button"
+							onClick={handleGetPdfUrl}
+							disabled={pdfLoading}
+							className="btn-success"
+						>
+							{pdfLoading ? "Loading..." : "View PDF"}
+						</button>
 					</div>
-				)}
-			</div>
+					<div className="pdf-path mt-md">
+						<small className="text-secondary">
+							Current file: {pdfPath}
+						</small>
+					</div>
+				</>
+			) : (
+				<div className="empty-state">
+					<p>No PDF file uploaded yet.</p>
+				</div>
+			)}
 		</div>
 	);
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import styles from "../../new/new.module.css";
 
@@ -71,21 +72,25 @@ export default function ViewEbookForm({ user, ebookUser, content, templates }) {
 		content.publish_worker_status === "SUCCESS" &&
 		content.is_published === true;
 
-	// Get the live URL - convert whitespace to hyphens for the URL
+	// Get the live URL - updated to use content_number/title format
 	const getLiveUrl = () => {
-		if (!content.ebook_user_content_title || !ebookUser) {
+		if (
+			!content.ebook_user_content_number ||
+			!content.ebook_user_content_title ||
+			!ebookUser
+		) {
 			return null;
 		}
-		const userNumber = ebookUser.user_number;
+		const contentNumber = content.ebook_user_content_number;
 		const title = content.ebook_user_content_title.replace(/\s+/g, "-");
-		return `/live/${userNumber}/${title}`;
+		return `/live/${contentNumber}/${title}`;
 	};
 
 	return (
-		<div className={styles.container}>
-			<header className={styles.header}>
-				<div className={styles.headerContent}>
-					<div className={styles.logo}>
+		<div className="page-container">
+			<header className="header">
+				<div className="header-content">
+					<div className="logo">
 						<svg
 							width="32"
 							height="32"
@@ -110,33 +115,33 @@ export default function ViewEbookForm({ user, ebookUser, content, templates }) {
 						</svg>
 						<span>Ebook Admin</span>
 					</div>
-					<div className={styles.breadcrumb}>
-						<a href="/dashboard">Dashboard</a>
+					<div className="breadcrumb">
+						<Link href="/dashboard">Dashboard</Link>
 						<span>/</span>
 						<span>View</span>
 					</div>
 				</div>
 			</header>
 
-			<main className={styles.main}>
-				<div className={styles.pageHeader}>
+			<main className="main">
+				<div className="page-header">
 					<div>
-						<h1>View Ebook</h1>
-						<p>View ebook details</p>
+						<h1 className="page-header-title">View Ebook</h1>
+						<p className="page-header-description">
+							View ebook details
+						</p>
 					</div>
 
 					{/* Status Badge */}
-					<div className={styles.status}>
+					<div className="flex-gap-md">
 						{isPublished ? (
-							<span className={styles.publishedBadge}>
-								Published
-							</span>
+							<></>
 						) : (
-							<span className={styles.draftBadge}>Draft</span>
+							<span className="badge badge-draft">Draft</span>
 						)}
 
 						{isLive && (
-							<div className={styles.liveInfo}>
+							<div className="live-info">
 								<svg
 									width="20"
 									height="20"
@@ -165,7 +170,7 @@ export default function ViewEbookForm({ user, ebookUser, content, templates }) {
 										href={getLiveUrl()}
 										target="_blank"
 										rel="noopener noreferrer"
-										className={styles.liveLink}
+										className="live-link"
 									>
 										Click here to view
 									</a>
@@ -175,19 +180,19 @@ export default function ViewEbookForm({ user, ebookUser, content, templates }) {
 					</div>
 				</div>
 
-				<div className={styles.form}>
+				<div className="form-card">
 					{/* Tabs Navigation */}
-					<div className={styles.tabsContainer}>
+					<div className="tabs-container">
 						<button
 							type="button"
-							className={`${styles.tabButton} ${activeTab === "basic" ? styles.active : ""}`}
+							className={`tab-button ${activeTab === "basic" ? "active" : ""}`}
 							onClick={() => setActiveTab("basic")}
 						>
 							Basic Information
 						</button>
 						<button
 							type="button"
-							className={`${styles.tabButton} ${activeTab === "pdf" ? styles.active : ""}`}
+							className={`tab-button ${activeTab === "pdf" ? "active" : ""}`}
 							onClick={() => setActiveTab("pdf")}
 						>
 							PDF
@@ -195,7 +200,7 @@ export default function ViewEbookForm({ user, ebookUser, content, templates }) {
 						{showPreviewTab && (
 							<button
 								type="button"
-								className={`${styles.tabButton} ${activeTab === "preview" ? styles.active : ""}`}
+								className={`tab-button ${activeTab === "preview" ? "active" : ""}`}
 								onClick={() => setActiveTab("preview")}
 							>
 								Preview
@@ -204,26 +209,38 @@ export default function ViewEbookForm({ user, ebookUser, content, templates }) {
 					</div>
 
 					{/* Basic Information Tab */}
-					<ViewBasicInfoTab
-						isActive={activeTab === "basic"}
-						content={content}
-						templates={templates}
-					/>
+					<div
+						className={`tab-content ${activeTab === "basic" ? "active" : ""}`}
+					>
+						<ViewBasicInfoTab
+							isActive={activeTab === "basic"}
+							content={content}
+							templates={templates}
+						/>
+					</div>
 
 					{/* PDF Tab */}
-					<ViewPdfTab
-						isActive={activeTab === "pdf"}
-						content={content}
-					/>
+					<div
+						className={`tab-content ${activeTab === "pdf" ? "active" : ""}`}
+					>
+						<ViewPdfTab
+							isActive={activeTab === "pdf"}
+							content={content}
+						/>
+					</div>
 
 					{/* Preview Tab */}
 					{showPreviewTab && (
-						<ViewPreviewTab
-							isActive={activeTab === "preview"}
-							contentId={content.id}
-							previewWorkerStatus={previewWorkerStatus}
-							showPreviewLoader={showPreviewLoader}
-						/>
+						<div
+							className={`tab-content ${activeTab === "preview" ? "active" : ""}`}
+						>
+							<ViewPreviewTab
+								isActive={activeTab === "preview"}
+								contentId={content.id}
+								previewWorkerStatus={previewWorkerStatus}
+								showPreviewLoader={showPreviewLoader}
+							/>
+						</div>
 					)}
 				</div>
 			</main>

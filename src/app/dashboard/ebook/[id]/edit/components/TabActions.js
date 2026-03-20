@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import styles from "../../../new/new.module.css";
 
 export default function TabActions({
 	showPublishButton,
@@ -28,21 +27,25 @@ export default function TabActions({
 	const isLive =
 		workerData?.publish === "SUCCESS" && content?.is_published === true;
 
-	// Get the live URL - convert whitespace to hyphens for the URL
+	// Get the live URL - use ebook_user_content_number and convert whitespace to hyphens for the URL
 	const getLiveUrl = () => {
-		if (!content?.ebook_user_content_title || !content?.ebook_user?.user_number) {
+		if (
+			!content?.ebook_user_content_number ||
+			!content?.ebook_user_content_title ||
+			!content?.ebook_user?.user_number
+		) {
 			return null;
 		}
-		const userNumber = content.ebook_user.user_number;
+		const contentNumber = content.ebook_user_content_number;
 		const title = content.ebook_user_content_title.replace(/\s+/g, "-");
-		return `/live/${encodeURIComponent(userNumber)}/${encodeURIComponent(title)}`;
+		return `/live/${encodeURIComponent(contentNumber)}/${encodeURIComponent(title)}`;
 	};
 
 	return (
-		<div className={styles.headerActions}>
+		<div className="header-actions">
 			{/* LIVE content information */}
 			{isLive ? (
-				<div className={styles.liveInfo}>
+				<div className="live-info">
 					<svg
 						width="20"
 						height="20"
@@ -71,7 +74,7 @@ export default function TabActions({
 							href={getLiveUrl()}
 							target="_blank"
 							rel="noopener noreferrer"
-							className={styles.liveLink}
+							className="live-link"
 						>
 							Click here to view
 						</a>
@@ -80,10 +83,10 @@ export default function TabActions({
 			) : (
 				/* Three dots dropdown menu */
 				hasDropdownItems && (
-					<div className={styles.dropdown}>
+					<div className="dropdown">
 						<button
 							type="button"
-							className={styles.menuBtn}
+							className="menu-btn"
 							onClick={() => setMenuOpen(!menuOpen)}
 						>
 							<svg
@@ -99,7 +102,7 @@ export default function TabActions({
 						</button>
 
 						{menuOpen && (
-							<div className={styles.dropdownMenu}>
+							<div className="dropdown-menu">
 								{showPublishButton && (
 									<button
 										type="button"
@@ -111,9 +114,11 @@ export default function TabActions({
 											loading ||
 											formData.is_published ||
 											publishing ||
-											publishWorkerStatus === "PROCESSING"
+											publishWorkerStatus ===
+												"PROCESSING" ||
+											creatingPreview
 										}
-										className={styles.dropdownItem}
+										className="dropdown-item"
 									>
 										<svg
 											width="16"
@@ -147,9 +152,11 @@ export default function TabActions({
 											loading ||
 											isPublished ||
 											publishing ||
-											publishWorkerStatus === "PROCESSING"
+											publishWorkerStatus ===
+												"PROCESSING" ||
+											creatingPreview
 										}
-										className={styles.dropdownItem}
+										className="dropdown-item"
 									>
 										<svg
 											width="16"

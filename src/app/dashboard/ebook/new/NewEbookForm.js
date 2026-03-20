@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./new.module.css";
@@ -113,22 +114,77 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 	};
 
 	return (
-		<div className={styles.container}>
+		<div className="page-container">
+			<header className="header">
+				<div className={styles.headerContent}>
+					<div className="logo">
+						<svg
+							width="32"
+							height="32"
+							viewBox="0 0 24 24"
+							fill="none"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<path
+								d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							/>
+							<path
+								d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							/>
+						</svg>
+						<span>Ebook Admin</span>
+					</div>
+					<div className="nav-links">
+						<Link href="/dashboard" className="nav-link">
+							Dashboard
+						</Link>
+					</div>
+					<div className="user-info">
+						<div className="user-details">
+							<span className="user-name">
+								{ebookUser?.name || user.email}
+							</span>
+							<span className="user-email">{user.email}</span>
+						</div>
+						<form action="/auth/signout" method="post">
+							<button className="btn-logout" type="submit">
+								Sign Out
+							</button>
+						</form>
+					</div>
+				</div>
+			</header>
+
 			<main className={styles.main}>
-				<div className={styles.pageHeader}>
-					<h1>Create New Ebook</h1>
-					<p>Fill in the details to create your new ebook</p>
+				<div className="page-header">
+					<div>
+						<h1 className="page-header-title">Create New Ebook</h1>
+						<p className="page-header-description">
+							Fill in the details to create your new ebook
+						</p>
+					</div>
 				</div>
 
-				<form onSubmit={handleSubmit} className={styles.form}>
-					{error && <div className={styles.error}>{error}</div>}
+				<form onSubmit={handleSubmit} className="form-card">
+					{error && <div className="error-message">{error}</div>}
 
-					<div className={styles.section}>
-						<h2>Basic Information</h2>
+					<div className="mb-xl">
+						<h2 className="section-title">Basic Information</h2>
 
 						{/* TEMPLATE */}
-						<div className={styles.field}>
-							<label htmlFor="ebook_template_id">
+						<div className="field">
+							<label
+								htmlFor="ebook_template_id"
+								className="field-label"
+							>
 								Template *
 							</label>
 							<select
@@ -136,6 +192,7 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 								name="ebook_template_id"
 								value={formData.ebook_template_id}
 								onChange={handleChange}
+								className="field-input"
 							>
 								<option value="">-- Select Template --</option>
 								{templates.map((template) => (
@@ -151,8 +208,11 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 						</div>
 
 						{/* TITLE */}
-						<div className={styles.field}>
-							<label htmlFor="ebook_user_content_title">
+						<div className="field">
+							<label
+								htmlFor="ebook_user_content_title"
+								className="field-label"
+							>
 								Title *
 							</label>
 							<input
@@ -162,12 +222,16 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 								value={formData.ebook_user_content_title}
 								onChange={handleChange}
 								placeholder="Enter ebook title"
+								className="field-input"
 							/>
 						</div>
 
 						{/* DESCRIPTION */}
-						<div className={styles.field}>
-							<label htmlFor="ebook_user_content_description">
+						<div className="field">
+							<label
+								htmlFor="ebook_user_content_description"
+								className="field-label"
+							>
 								Description *
 							</label>
 							<textarea
@@ -177,19 +241,20 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 								onChange={handleChange}
 								rows={4}
 								placeholder="Enter ebook description"
+								className="field-input"
 							/>
 						</div>
 					</div>
 
-					<div className={styles.actions}>
-						<a href="/dashboard" className={styles.cancelBtn}>
+					<div className="actions-row">
+						<a href="/dashboard" className="btn-secondary">
 							Cancel
 						</a>
 
 						<button
 							type="submit"
 							disabled={loading}
-							className={styles.submitBtn}
+							className="btn-primary"
 						>
 							{loading ? "Creating..." : "Create Ebook"}
 						</button>
