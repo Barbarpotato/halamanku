@@ -2,13 +2,11 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import styles from "./login.module.css";
 
 export default function LoginPage() {
 	const [loading, setLoading] = useState(false);
 	const supabase = createClient();
-	const router = useRouter();
 
 	const handleGoogleSignIn = async () => {
 		try {
@@ -35,30 +33,15 @@ export default function LoginPage() {
 			<div className={styles.card}>
 				<div className={styles.header}>
 					<div className={styles.logo}>
-						<svg
-							width="48"
-							height="48"
-							viewBox="0 0 24 24"
-							fill="none"
-							xmlns="http://www.w3.org/2000/svg"
-						>
-							<path
-								d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-							<path
-								d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-						</svg>
+						<img
+							src="/halamanku.png"
+							alt="Halamanku"
+							width="90"
+							height="90"
+						/>
 					</div>
-					<h1>Welcome to Ebook Admin</h1>
+					<h1>Welcome to Halamanku</h1>
+
 					<p>Sign in to manage your ebooks</p>
 				</div>
 

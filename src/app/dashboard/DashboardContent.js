@@ -11,12 +11,16 @@ export default function DashboardContent({ user, ebookUser, userContents }) {
 			<main className="main">
 				<div className="page-header">
 					<div>
-						<h1 className="page-header-title">My Ebooks</h1>
+						<h1 className="page-header-title">Dashboard</h1>
 						<p className="page-header-description">
 							Manage your ebook content
 						</p>
 					</div>
-					<Link href="/dashboard/ebook/new" className="btn-create">
+					<Link
+						href="/dashboard/ebook/new"
+						prefetch
+						className="btn-create"
+					>
 						<svg
 							width="20"
 							height="20"
@@ -30,85 +34,84 @@ export default function DashboardContent({ user, ebookUser, userContents }) {
 								strokeLinecap="round"
 							/>
 						</svg>
-						Create New Ebook
 					</Link>
 				</div>
 
 				{userContents && userContents.length > 0 ? (
-					<div className="grid-auto">
-						{userContents.map((content) => (
-							<div key={content.id} className="content-card">
-								<div className="card-header">
-									<span className="content-number">
-										{content.ebook_user_content_number}
-									</span>
-									<span
-										className={`badge ${content.is_published ? "badge-published" : "badge-draft"}`}
-									>
-										{content.is_published
-											? "Published"
-											: "Draft"}
-									</span>
-								</div>
-								<h3 className="page-title">
-									{content.ebook_user_content_title ||
-										"Untitled"}
-								</h3>
-								<p className="card-description">
-									{content.ebook_user_content_description ||
-										"No description"}
-								</p>
-								<div className="card-footer">
-									<span className="card-template">
-										{content.ebook_template
-											?.template_name ||
-											content.ebook_template
-												?.repository_name ||
-											"None"}
-									</span>
-									<div className="card-actions">
-										<Link
-											href={`/dashboard/ebook/${content.id}/view`}
-											className="btn-action"
-										>
-											View
-										</Link>
-										{!content.is_published && (
-											<Link
-												href={`/dashboard/ebook/${content.id}/edit`}
-												className="btn-action"
+					<div className="table-container">
+						<table className="modern-table">
+							<thead>
+								<tr>
+									<th>Title</th>
+									<th>Description</th>
+									<th>Template</th>
+									<th>Status</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								{userContents.map((content) => (
+									<tr key={content.id}>
+										<td>
+											{content.ebook_user_content_title ||
+												"Untitled"}
+										</td>
+										<td>
+											{content.ebook_user_content_description
+												? content.ebook_user_content_description.slice(
+														0,
+														350,
+													) +
+													(content
+														.ebook_user_content_description
+														.length > 350
+														? "..."
+														: "")
+												: "No description"}
+										</td>
+										<td>
+											{content.ebook_template
+												?.template_name ||
+												content.ebook_template
+													?.repository_name ||
+												"None"}
+										</td>
+										<td>
+											<span
+												className={`badge ${content.is_published ? "badge-published" : "badge-draft"}`}
 											>
-												Edit
-											</Link>
-										)}
-									</div>
-								</div>
-							</div>
-						))}
+												{content.is_published
+													? "Published"
+													: "Draft"}
+											</span>
+										</td>
+										<td>
+											<div className="table-actions">
+												<Link
+													href={`/dashboard/ebook/${content.id}/view`}
+													prefetch
+													className="btn-action"
+												>
+													View
+												</Link>
+												{!content.is_published && (
+													<Link
+														href={`/dashboard/ebook/${content.id}/edit`}
+														prefetch
+														className="btn-action"
+													>
+														Edit
+													</Link>
+												)}
+											</div>
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
 					</div>
 				) : (
 					<div className="empty-state">
-						<svg
-							width="64"
-							height="64"
-							viewBox="0 0 24 24"
-							fill="none"
-						>
-							<path
-								d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
-								stroke="#CBD5E1"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-							<path
-								d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
-								stroke="#CBD5E1"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-						</svg>
 						<h3>No ebooks yet</h3>
 						<p>Create your first ebook to get started</p>
 					</div>

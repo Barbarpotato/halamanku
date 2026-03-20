@@ -35,12 +35,37 @@ export default function PreviewContent({ content, template }) {
 		}
 	}, [content.ebook_template_preview_code]);
 
-	return (
+	return content.ebook_template_preview_code ? (
 		<iframe
 			ref={iframeRef}
 			className={styles.previewIframe}
 			title="Ebook Preview"
 			sandbox="allow-scripts allow-same-origin allow-forms"
 		/>
+	) : (
+		<div
+			style={{
+				padding: "20px",
+				textAlign: "center",
+				height: "100vh",
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center",
+			}}
+		>
+			<div>
+				<h2>Preview Not Available</h2>
+				<p>
+					The preview for this ebook has not been generated yet.
+					Please go back to the edit page and create the preview.
+				</p>
+				<a
+					href={`/dashboard/ebook/${content.id}/edit`}
+					style={{ color: "blue", textDecoration: "underline" }}
+				>
+					Go to Edit Page
+				</a>
+			</div>
+		</div>
 	);
 }

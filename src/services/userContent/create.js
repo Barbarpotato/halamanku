@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { randomBytes } from "crypto";
 
 const supabase = createClient();
 
@@ -21,7 +22,7 @@ export const createEbookUserContent = async (formData, ebookUser) => {
 			{
 				ebook_user_id: ebookUser.id,
 				ebook_template_id: templateId,
-				ebook_user_content_number: formData.ebook_user_content_number,
+				ebook_user_content_number: `CNT-${randomBytes(8).toString("hex")}`,
 				ebook_user_content_title:
 					formData.ebook_user_content_title.trim(),
 				ebook_user_content_description:

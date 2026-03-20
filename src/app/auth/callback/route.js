@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
@@ -44,7 +45,7 @@ export async function GET(request) {
 								user.user_metadata?.full_name ||
 								user.email?.split("@")[0] ||
 								"User",
-							user_number: `USR${Date.now()}`,
+							user_number: `USR-${randomBytes(8).toString("hex")}`,
 							is_premium: false,
 						},
 					]);

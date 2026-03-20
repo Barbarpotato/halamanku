@@ -11,6 +11,8 @@ export default function QueryProvider({ children }) {
 					queries: {
 						staleTime: 60 * 1000,
 						refetchOnWindowFocus: false,
+						keepPreviousData: true,
+						gcTime: 5 * 60 * 1000,
 					},
 				},
 			}),

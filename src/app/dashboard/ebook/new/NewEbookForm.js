@@ -19,7 +19,6 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 
 	const [formData, setFormData] = useState({
 		ebook_template_id: "",
-		ebook_user_content_number: `CNT${Date.now()}`,
 		ebook_user_content_title: "",
 		ebook_user_content_description: "",
 	});

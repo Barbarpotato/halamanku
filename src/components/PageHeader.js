@@ -12,29 +12,13 @@ export default function PageHeader({
 		<header className="header">
 			<div className="header-content">
 				<div className="logo">
-					<svg
+					<img
+						src="/halamanku.png"
+						alt="Halamanku"
 						width="32"
 						height="32"
-						viewBox="0 0 24 24"
-						fill="none"
-						xmlns="http://www.w3.org/2000/svg"
-					>
-						<path
-							d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-						/>
-						<path
-							d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-						/>
-					</svg>
-					<span>Ebook Admin</span>
+					/>
+					<span>Halamanku</span>
 				</div>
 
 				{breadcrumb && (
@@ -43,7 +27,9 @@ export default function PageHeader({
 							<span key={index}>
 								{index > 0 && <span>/</span>}
 								{item.href ? (
-									<Link href={item.href}>{item.label}</Link>
+									<Link href={item.href} prefetch>
+										{item.label}
+									</Link>
 								) : (
 									<span style={{ marginLeft: "5px" }}>
 										{item.label}
