@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import styles from "../../new/new.module.css";
+import { useModal } from "@/components/ModalProvider";
 
 // Services
 import { updateEbookUserContent } from "@/services/userContent/update";
@@ -24,6 +25,7 @@ import PreviewTab from "./components/PreviewTab";
 
 export default function EditEbookForm({ user, ebookUser, content, templates }) {
 	const router = useRouter();
+	const modal = useModal();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 	const fileInputRef = useRef(null);
@@ -224,7 +226,10 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 		try {
 			await updateEbookUserContent(content.id, formData);
 			router.refresh();
-			alert("Ebook updated successfully!");
+			modal.show({
+				type: "info",
+				message: "Ebook updated successfully!",
+			});
 		} catch (err) {
 			setError(err.message);
 		} finally {
@@ -233,7 +238,10 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 	};
 
 	const handleDelete = async () => {
-		if (!confirm("Are you sure you want to delete this ebook?")) return;
+		const result = await modal.confirm({
+			message: "Are you sure you want to delete this ebook?",
+		});
+		if (!result) return;
 
 		setLoading(true);
 		setError(null);
@@ -249,16 +257,21 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 	};
 
 	const handlePublish = async () => {
-		if (!confirm("Are you sure you want to publish this ebook?")) return;
+		const result = await modal.confirm({
+			message: "Are you sure you want to publish this ebook?",
+		});
+		if (!result) return;
 
 		setPublishing(true);
 		setError(null);
 
 		try {
 			await publishEbookUserContent(formData, content);
-			alert(
-				"Ebook is being published. Please Wait for a while to see your page",
-			);
+			modal.show({
+				type: "info",
+				message:
+					"Ebook is being published. Please Wait for a while to see your page",
+			});
 		} catch (err) {
 			setError(err.message);
 			setPublishing(false);

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import styles from "./dashboard.module.css";
 import PageHeader from "@/components/PageHeader";
 
 export default function DashboardContent({ user, ebookUser, userContents }) {

@@ -1030,3 +1030,70 @@ a {
 	color: var(--color-slate-800);
 	margin: 0 0 var(--spacing-sm);
 }
+
+/* ============================================
+   MODAL
+   ============================================ */
+
+.modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+}
+
+.modal-content {
+	background: white;
+	padding: var(--spacing-2xl);
+	border-radius: var(--radius-lg);
+	max-width: 400px;
+	width: 90%;
+	box-shadow: var(--shadow-lg);
+}
+
+.modal-content p {
+	margin: 0 0 var(--spacing-lg) 0;
+	color: var(--color-slate-800);
+	font-size: 16px;
+	line-height: 1.5;
+}
+
+.modal-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--spacing-md);
+	margin-top: var(--spacing-xl);
+}
+
+.modal-actions button {
+	padding: var(--spacing-md) var(--spacing-lg);
+	border: none;
+	border-radius: var(--radius-md);
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.modal-actions button:first-child {
+	background: var(--color-slate-100);
+	color: var(--color-slate-500);
+}
+
+.modal-actions button:first-child:hover {
+	background: var(--color-slate-200);
+}
+
+.modal-actions button:last-child {
+	background: var(--color-primary);
+	color: white;
+}
+
+.modal-actions button:last-child:hover {
+	background: var(--color-primary-dark);
+}
