@@ -1,19 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import styles from "./live.module.css";
 
 export const dynamic = "force-dynamic";
 
 export default async function LivePage({ params }) {
-	const { content_number: contentNumberParam, title: titleParam } =
-		await params;
+	const { content_number: contentNumberParam, title: titleParam } = params;
 
-	// Decode and convert hyphens back to whitespace
+	// Decode params
 	const contentNumber = decodeURIComponent(contentNumberParam);
 	const title = decodeURIComponent(titleParam).replace(/-/g, " ");
 
-	const supabase = await createClient();
+	const cookieStore = cookies();
+	const supabase = await createClient(); // pastikan createClient sudah handle cookies dari request
 
-	// Validate content_number and title from ebook_user_content table
+	// Validasi konten dari tabel (sama seperti sebelumnya)
 	const { data: content, error: contentError } = await supabase
 		.from("ebook_user_content")
 		.select(
@@ -36,7 +38,6 @@ export default async function LivePage({ params }) {
 		);
 	}
 
-	// Check if content is actually published
 	if (
 		content.is_published !== true ||
 		content.publish_worker_status !== "SUCCESS"
@@ -54,7 +55,6 @@ export default async function LivePage({ params }) {
 		);
 	}
 
-	// Step 4: Check if publish_site_url exists
 	if (!content.publish_site_url) {
 		return (
 			<div className={styles.container}>
@@ -69,15 +69,84 @@ export default async function LivePage({ params }) {
 		);
 	}
 
-	// Render the iframe with the published site URL
+	// Cek user/session server-side
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		const { data, error } = await supabase.auth.signInWithOAuth({
+			provider: "google",
+			options: {
+				redirectTo: window.location.origin + "/live",
+			},
+		});
+
+		if (error) {
+			console.error("OAuth redirect error:", error);
+			return (
+				<div className={styles.container}>
+					<div className={styles.error}>
+						<h1>Login Gagal</h1>
+						<p>{error.message}</p>
+					</div>
+				</div>
+			);
+		}
+
+		if (data.url) {
+			redirect(data.url);
+		}
+
+		// Fallback jika redirect gagal
+		return (
+			<div className={styles.container}>
+				<div className={styles.error}>
+					<h1>Silakan Login</h1>
+					<p>
+						Anda perlu login dengan Google untuk mengakses ebook
+						ini.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Sudah login → ambil session & access_token
+	const {
+		data: { session },
+	} = await supabase.auth.getSession();
+	const accessToken = session?.access_token;
+
+	if (!accessToken) {
+		return (
+			<div className={styles.container}>
+				<div className={styles.error}>
+					<h1>Token Tidak Ditemukan</h1>
+					<p>
+						Terjadi kesalahan saat mengambil token autentikasi. Coba
+						login ulang.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Bangun URL iframe dengan query param token
+	const iframeSrc = `${content.publish_site_url}?token=${encodeURIComponent(accessToken)}`;
+
 	return (
-		<div className={styles.container}>
+		<div
+			className={styles.container}
+			style={{ height: "100vh", width: "100%" }}
+		>
 			<iframe
-				src={content.publish_site_url}
+				src={iframeSrc}
 				className={styles.iframe}
 				title={content.ebook_user_content_title}
 				frameBorder="0"
 				allowFullScreen
+				style={{ width: "100%", height: "100%", border: "none" }}
 			/>
 		</div>
 	);
