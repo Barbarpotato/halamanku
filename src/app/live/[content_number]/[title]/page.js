@@ -78,7 +78,7 @@ export default async function LivePage({ params }) {
 		const { data, error } = await supabase.auth.signInWithOAuth({
 			provider: "google",
 			options: {
-				redirectTo: window.location.origin + "/live",
+				redirectTo: location.origin + "/live",
 			},
 		});
 
