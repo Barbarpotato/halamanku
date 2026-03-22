@@ -1,12 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 
 export default function PageHeader({ user, ebookUser, showUserInfo = false }) {
 	const [menuOpen, setMenuOpen] = useState(false);
-
-	console.log(user);
 
 	return (
 		<header className="header">
@@ -48,7 +45,7 @@ export default function PageHeader({ user, ebookUser, showUserInfo = false }) {
 										<img
 											src={user?.user_metadata?.picture}
 											alt="Profile picture"
-											class="inline-block size-6 rounded-full ring-2 ring-gray-900 outline -outline-offset-1 outline-white/10"
+											className="inline-block size-6 rounded-full ring-2 ring-gray-900 outline -outline-offset-1 outline-white/10"
 										/>
 										<div className="flex flex-col ml-1">
 											<span className="user-email block text-xs sm:text-sm text-gray-600">
@@ -111,7 +108,7 @@ export default function PageHeader({ user, ebookUser, showUserInfo = false }) {
 							<img
 								src={user?.user_metadata?.picture}
 								alt="Profile picture"
-								class="inline-block size-6 rounded-full ring-2 ring-gray-900 outline -outline-offset-1 outline-white/10"
+								className="inline-block size-6 rounded-full ring-2 ring-gray-900 outline -outline-offset-1 outline-white/10"
 							/>
 							<div className="flex flex-col ml-1">
 								<span className="user-email block text-xs sm:text-sm text-gray-600">
