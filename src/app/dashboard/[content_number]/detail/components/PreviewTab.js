@@ -1,21 +1,61 @@
 "use client";
 
+import { useState } from "react";
+import { createPreview } from "@/services/userContent/workflow";
+import { useModal } from "@/components/ModalProvider";
+
 export default function PreviewTab({
-	contentNumber,
-	isActive,
-	previewCode,
-	creatingPreview,
-	onCreatePreview,
-	previewWorkerStatus,
-	showPreviewLoader,
+	router,
+	setError,
+	formData,
+	content,
 	readOnly = false,
 }) {
+	const modal = useModal();
+
+	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	const hasPreview = !!content.ebook_template_preview_code;
+	const canOpenPreview = readOnly || hasPreview;
+
+	const handleCreatePreview = async () => {
+		if (isSubmitting || readOnly) return;
+
+		if (hasPreview) {
+			const confirmed = await modal.confirm({
+				message:
+					"Are you sure you want to recreate the preview? This will overwrite the existing one.",
+			});
+			if (!confirmed) return;
+		}
+
+		setError(null);
+		setIsSubmitting(true);
+
+		try {
+			await createPreview(formData);
+
+			if (!hasPreview) {
+				modal.show({
+					type: "info",
+					message: "Horray! Your preview is being created",
+				});
+			}
+
+			router.refresh();
+		} catch (err) {
+			setError(err.message);
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
 	return (
 		<div className="mb-xl">
 			<h2 className="section-title">Preview</h2>
 
-			{/* Show processing indicator when preview is being created */}
-			{showPreviewLoader && (
+			{/* LOADER */}
+			{isSubmitting && (
 				<div className="loader-container">
 					<div className="loader-spinner"></div>
 					<p className="loader-text">
@@ -24,57 +64,28 @@ export default function PreviewTab({
 				</div>
 			)}
 
-			{previewCode && !showPreviewLoader ? (
-				<>
-					{/* Open Preview - only visible when previewCode exists */}
-					<a
-						href={`/dashboard/${contentNumber}/preview`}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="btn-success"
-					>
-						<svg
-							width="20"
-							height="20"
-							viewBox="0 0 24 24"
-							fill="none"
-							xmlns="http://www.w3.org/2000/svg"
-						>
-							<path
-								d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-							<path
-								d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-						</svg>
-						Open Preview
-					</a>
-				</>
-			) : !readOnly ? (
-				<>
-					{/* Create Preview - only visible when previewCode is null and not processing */}
-					{!showPreviewLoader && (
-						<button
-							type="button"
-							onClick={onCreatePreview}
-							className="btn-success"
-							disabled={creatingPreview}
-						>
-							{creatingPreview
-								? "Creating Preview..."
-								: "Create Preview"}
-						</button>
-					)}
-				</>
-			) : null}
+			{/* OPEN PREVIEW */}
+			{canOpenPreview && !isSubmitting && (
+				<a
+					href={`/dashboard/${content.ebook_user_content_number}/preview`}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="btn-success mr-2"
+				>
+					Open Preview
+				</a>
+			)}
+
+			{/* CREATE BUTTON */}
+			{!readOnly && !isSubmitting && (
+				<button
+					type="button"
+					onClick={handleCreatePreview}
+					className="btn-success"
+				>
+					{hasPreview ? "Recreate Preview" : "Create Preview"}
+				</button>
+			)}
 		</div>
 	);
 }

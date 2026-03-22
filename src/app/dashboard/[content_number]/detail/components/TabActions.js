@@ -1,37 +1,84 @@
 "use client";
 
+import { useModal } from "@/components/ModalProvider";
 import { useState } from "react";
 import { getLiveUrl } from "@/services/userContent/utils";
 
+// Services
+import { publishEbookUserContent } from "@/services/userContent/workflow";
+import { deleteEbookUserContent } from "@/services/userContent/delete";
+
 export default function TabActions({
+	router,
+	setError,
+	setLoading,
 	showPublishButton,
 	showDeleteButton,
 	formData,
 	loading,
-	isPublished,
 	creatingPreview,
-	onPublish,
-	onCreatePreview,
-	onDelete,
-	publishing,
 	publishWorkerStatus,
-	workerData,
 	content,
-	user,
 	readOnly = false,
 }) {
+	const modal = useModal();
+
+	const [publishing, setPublishing] = useState(false);
 	const [menuOpen, setMenuOpen] = useState(false);
 
 	// Check if any dropdown item is available
 	const hasDropdownItems =
 		!readOnly && (showPublishButton || showDeleteButton);
 
+	const isPublished = content.is_published === true;
+
 	// Check if content is LIVE (published successfully)
 	const isLive =
-		workerData?.publish === "SUCCESS" && content?.is_published === true;
+		publishWorkerStatus === "SUCCESS" && content?.is_published === true;
 
 	// Get the live URL
 	const liveUrl = getLiveUrl(content, content?.ebook_user);
+
+	const handleDelete = async () => {
+		const result = await modal.confirm({
+			message: "Are you sure you want to delete this ebook?",
+		});
+		if (!result) return;
+
+		setLoading(true);
+		setError(null);
+
+		try {
+			await deleteEbookUserContent(content);
+			router.push("/dashboard");
+		} catch (err) {
+			setError(err.message);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handlePublish = async () => {
+		const result = await modal.confirm({
+			message: "Are you sure you want to publish this ebook?",
+		});
+		if (!result) return;
+
+		setPublishing(true);
+		setError(null);
+
+		try {
+			await publishEbookUserContent(formData, content);
+			modal.show({
+				type: "info",
+				message:
+					"Ebook is being published. Please Wait for a while to see your page",
+			});
+		} catch (err) {
+			setError(err.message);
+			setPublishing(false);
+		}
+	};
 
 	return (
 		<div className="header-actions">
@@ -60,13 +107,15 @@ export default function TabActions({
 							strokeLinejoin="round"
 						/>
 					</svg>
-					<span>
-						Your Content is Live.{" "}
+					<span className="flex flex-col sm:flex-row items-start sm:items-center">
+						<span className="hidden sm:inline">
+							Your Content is Live.{" "}
+						</span>
 						<a
 							href={liveUrl}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="live-link"
+							className="live-link text-blue-600 hover:text-blue-800 underline"
 						>
 							Click here to view
 						</a>
@@ -99,7 +148,7 @@ export default function TabActions({
 									<button
 										type="button"
 										onClick={() => {
-											onPublish();
+											handlePublish();
 											setMenuOpen(false);
 										}}
 										disabled={
@@ -138,7 +187,7 @@ export default function TabActions({
 									<button
 										type="button"
 										onClick={() => {
-											onDelete();
+											handleDelete();
 											setMenuOpen(false);
 										}}
 										disabled={

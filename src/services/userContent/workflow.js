@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/client";
 const WORKFLOW_SERVICE_URL =
 	"https://stzieqkgyktsrtauytmu.supabase.co/functions/v1/ebook-workflow-service";
 
+const PREVIEW_SERVICE_URL =
+	"https://stzieqkgyktsrtauytmu.supabase.co/functions/v1/preview-service";
+
 const supabase = createClient();
 
 // Helper to get anon key
@@ -37,54 +40,35 @@ export const publishEbookUserContent = async (formData, content) => {
 	});
 };
 
-export const createPreview = async (formData, content, user) => {
-	const { data: templateData, error: templateError } = await supabase
-		.from("ebook_template")
-		.select("template_name")
-		.eq("id", content.ebook_template_id)
-		.single();
+export const createPreview = async (formData) => {
+	const {
+		data: { session },
+	} = await supabase.auth.getSession();
 
-	if (templateError || !templateData) {
-		throw new Error(templateError?.message || "Template not found");
+	if (!session?.access_token) {
+		throw new Error("User not authenticated");
 	}
 
-	const response = await fetch(WORKFLOW_SERVICE_URL, {
+	const response = await fetch(PREVIEW_SERVICE_URL, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
-			Authorization: `Bearer ${getAnonKey()}`,
+			Authorization: `Bearer ${session.access_token}`,
 		},
 		body: JSON.stringify({
-			event_type: "preview-ebook-site",
 			content_number: formData.ebook_user_content_number,
-			total_pages: content.storage_file_total_page,
-			template_name: templateData.template_name,
 		}),
 	});
 
+	if (!response.ok) {
+		throw new Error(`HTTP error: ${response.status}`);
+	}
+
 	const result = await response.json();
 
-	if (result.status === "SUCCESS") {
-		const { error: accessError } = await supabase
-			.from("ebook_user_content_access")
-			.insert({
-				ebook_user_content_id: content.id,
-				ebook_user_content_number: formData.ebook_user_content_number,
-				auth_user_id: user.id,
-				email_address: user.email,
-				lynk_id_reference_id: null,
-				storage_shard_name: content.storage_file_name.replace(
-					".pdf",
-					"",
-				),
-			});
-
-		if (accessError) {
-			console.error("Failed to create access record:", accessError);
-		}
-
-		return result;
-	} else {
+	if (result.status !== "SUCCESS") {
 		throw new Error(result.error || "Failed to create preview");
 	}
+
+	return result;
 };

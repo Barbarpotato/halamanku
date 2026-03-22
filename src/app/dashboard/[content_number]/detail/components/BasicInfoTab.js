@@ -3,10 +3,19 @@
 export default function BasicInfoTab({
 	content,
 	formData,
-	handleChange,
+	setFormData,
 	templates,
 	readOnly = false,
 }) {
+	const handleChange = (e) => {
+		const { name, value, type, checked } = e.target;
+
+		setFormData((prev) => ({
+			...prev,
+			[name]: type === "checkbox" ? checked : value,
+		}));
+	};
+
 	return (
 		<div className="mb-xl">
 			<h2 className="section-title">Basic Information</h2>

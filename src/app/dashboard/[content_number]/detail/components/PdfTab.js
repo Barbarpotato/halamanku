@@ -1,24 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { uploadPdf, getPdfUrl } from "@/services/userContent/pdf";
 
 export default function PdfTab({
-	pdfFile,
-	pdfPath,
-	pdfLoading,
-	pdfError,
+	setError,
 	uploadWorkerStatus,
 	showLoader,
-	handleFileChange,
-	handleUploadPdf,
-	handleGetPdfUrl,
-	fileInputRef,
 	content,
 	readOnly = false,
 }) {
 	const isPublished = content?.is_published === true;
 
+	const fileInputRef = useRef(null);
+
+	// PDF file state
+	const [pdfFile, setPdfFile] = useState(null);
+	const [pdfPath, setPdfPath] = useState(content.storage_file_name || "");
 	const [readOnlyPdfLoading, setReadOnlyPdfLoading] = useState(false);
+
+	const [pdfLoading, setPdfLoading] = useState(false);
 
 	const STORAGE_URL =
 		"https://stzieqkgyktsrtauytmu.supabase.co/functions/v1/ebook-storage-service";
@@ -28,6 +29,63 @@ export default function PdfTab({
 			return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 		}
 		return null;
+	};
+
+	// Handle file selection
+	const handleFileChange = (e) => {
+		const file = e.target.files[0];
+		if (file) {
+			if (file.type !== "application/pdf") {
+				setError("Only PDF files are allowed");
+				return;
+			}
+			setPdfFile(file);
+			setError(null);
+		}
+	};
+
+	// Upload new PDF
+	const handleUploadPdf = async () => {
+		if (!pdfFile) {
+			setError("Please select a file first");
+			return;
+		}
+
+		setPdfLoading(true);
+		setError(null);
+
+		try {
+			const path = await uploadPdf(content.id, pdfFile);
+			setPdfPath(path);
+			setPdfFile(null);
+			if (fileInputRef.current) {
+				fileInputRef.current.value = "";
+			}
+		} catch (err) {
+			setError(err.message);
+		} finally {
+			setPdfLoading(false);
+		}
+	};
+
+	// Get signed URL
+	const handleGetPdfUrl = async () => {
+		if (!pdfPath) {
+			setError("No file to view");
+			return;
+		}
+
+		setPdfLoading(true);
+		setError(null);
+
+		try {
+			const signedUrl = await getPdfUrl(pdfPath);
+			window.open(signedUrl, "_blank");
+		} catch (err) {
+			setError(err.message);
+		} finally {
+			setPdfLoading(false);
+		}
 	};
 
 	const handleReadOnlyGetPdfUrl = async () => {
@@ -73,10 +131,6 @@ export default function PdfTab({
 			{/* PDF File Section - hidden when showLoader is true */}
 			{!showLoader && (
 				<>
-					{pdfError && (
-						<div className="error-message mb-lg">{pdfError}</div>
-					)}
-
 					{readOnly ? (
 						<>
 							{pdfPath ? (
