@@ -6,9 +6,9 @@ const Modal = ({ isOpen, type, message, onConfirm, onCancel, onClose }) => {
 	if (!isOpen) return null;
 
 	return (
-		<div className="modal-overlay" onClick={onClose}>
-			<div className="modal-content" onClick={(e) => e.stopPropagation()}>
-				<p>{message}</p>
+		<div className="modal-overlay">
+			<div className="modal-content">
+				<p className="text-sm sm:text-base">{message}</p>
 				<div className="modal-actions">
 					{type === "confirm" ? (
 						<>

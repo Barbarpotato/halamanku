@@ -18,11 +18,13 @@ export default function TabActions({
 	workerData,
 	content,
 	user,
+	readOnly = false,
 }) {
 	const [menuOpen, setMenuOpen] = useState(false);
 
 	// Check if any dropdown item is available
-	const hasDropdownItems = showPublishButton || showDeleteButton;
+	const hasDropdownItems =
+		!readOnly && (showPublishButton || showDeleteButton);
 
 	// Check if content is LIVE (published successfully)
 	const isLive =
@@ -108,9 +110,10 @@ export default function TabActions({
 												"PROCESSING" ||
 											creatingPreview
 										}
-										className="dropdown-item"
+										className="dropdown-item flex"
 									>
 										<svg
+											className="mr-2"
 											width="16"
 											height="16"
 											viewBox="0 0 24 24"
@@ -146,9 +149,10 @@ export default function TabActions({
 												"PROCESSING" ||
 											creatingPreview
 										}
-										className="dropdown-item"
+										className="dropdown-item flex"
 									>
 										<svg
+											className="mr-2"
 											width="16"
 											height="16"
 											viewBox="0 0 24 24"

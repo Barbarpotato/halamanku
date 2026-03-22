@@ -1,13 +1,14 @@
 "use client";
 
 export default function PreviewTab({
-	contentId,
+	contentNumber,
 	isActive,
 	previewCode,
 	creatingPreview,
 	onCreatePreview,
 	previewWorkerStatus,
 	showPreviewLoader,
+	readOnly = false,
 }) {
 	return (
 		<div className="mb-xl">
@@ -27,7 +28,7 @@ export default function PreviewTab({
 				<>
 					{/* Open Preview - only visible when previewCode exists */}
 					<a
-						href={`/dashboard/ebook/${contentId}/preview`}
+						href={`/dashboard/${contentNumber}/preview`}
 						target="_blank"
 						rel="noopener noreferrer"
 						className="btn-success"
@@ -57,7 +58,7 @@ export default function PreviewTab({
 						Open Preview
 					</a>
 				</>
-			) : (
+			) : !readOnly ? (
 				<>
 					{/* Create Preview - only visible when previewCode is null and not processing */}
 					{!showPreviewLoader && (
@@ -73,7 +74,7 @@ export default function PreviewTab({
 						</button>
 					)}
 				</>
-			)}
+			) : null}
 		</div>
 	);
 }

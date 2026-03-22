@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import styles from "./live.module.css";
 
 export const dynamic = "force-dynamic";
@@ -8,14 +7,11 @@ export const dynamic = "force-dynamic";
 export default async function LivePage({ params }) {
 	const { content_number: contentNumberParam, title: titleParam } = params;
 
-	// Decode params
 	const contentNumber = decodeURIComponent(contentNumberParam);
 	const title = decodeURIComponent(titleParam).replace(/-/g, " ");
 
-	const cookieStore = cookies();
-	const supabase = await createClient(); // pastikan createClient sudah handle cookies dari request
+	const supabase = await createClient();
 
-	// Validasi konten dari tabel (sama seperti sebelumnya)
 	const { data: content, error: contentError } = await supabase
 		.from("ebook_user_content")
 		.select(
@@ -69,16 +65,13 @@ export default async function LivePage({ params }) {
 		);
 	}
 
-	// Cek user/session server-side
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();
 
 	if (!user) {
 		const baseUrl =
-			process.env.NEXT_PUBLIC_SITE_URL +
-				`/live/${contentNumberParam}/${titleParam}` ||
-			"http://localhost:3000";
+			process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 		const currentPath = `/live/${contentNumberParam}/${titleParam}`;
 		const redirectTo = `${baseUrl}${currentPath}`;
 
@@ -105,7 +98,6 @@ export default async function LivePage({ params }) {
 			redirect(data.url);
 		}
 
-		// Fallback jika redirect gagal
 		return (
 			<div className={styles.container}>
 				<div className={styles.error}>
@@ -119,7 +111,6 @@ export default async function LivePage({ params }) {
 		);
 	}
 
-	// Sudah login → ambil session & access_token
 	const {
 		data: { session },
 	} = await supabase.auth.getSession();
@@ -139,7 +130,6 @@ export default async function LivePage({ params }) {
 		);
 	}
 
-	// Bangun URL iframe dengan query param token
 	const iframeSrc = `${content.publish_site_url}?token=${encodeURIComponent(accessToken)}`;
 
 	return (

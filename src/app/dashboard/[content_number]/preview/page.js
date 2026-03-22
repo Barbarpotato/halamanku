@@ -1,8 +1,8 @@
 import { getAuthenticatedUser, getEbookUser } from "@/services/user/auth";
-import { getEbookUserContentById } from "@/services/userContent/get";
+import { getEbookUserContentByNumber } from "@/services/userContent/get";
 import { getEbookTemplateById } from "@/services/ebookTemplate/get";
 import { redirect } from "next/navigation";
-import PreviewContent from "./PreviewContent";
+import Preview from "./index";
 
 export default async function PreviewPage({ params }) {
 	const user = await getAuthenticatedUser();
@@ -17,8 +17,11 @@ export default async function PreviewPage({ params }) {
 		redirect("/login");
 	}
 
-	const { id } = params;
-	const content = await getEbookUserContentById(id, ebookUser.id);
+	const { content_number } = params;
+	const content = await getEbookUserContentByNumber(
+		content_number,
+		ebookUser.id,
+	);
 
 	if (!content) {
 		return (
@@ -35,5 +38,5 @@ export default async function PreviewPage({ params }) {
 		template = await getEbookTemplateById(content.ebook_template_id);
 	}
 
-	return <PreviewContent content={content} template={template} />;
+	return <Preview content={content} template={template} />;
 }

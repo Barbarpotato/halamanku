@@ -1,8 +1,8 @@
 import { getAuthenticatedUser, getEbookUser } from "@/services/user/auth";
 import { getEbookTemplateList } from "@/services/ebookTemplate/get";
-import { getEbookUserContentById } from "@/services/userContent/get";
+import { getEbookUserContentByNumber } from "@/services/userContent/get";
 import { redirect } from "next/navigation";
-import EditEbookForm from "./EditEbookForm";
+import Detail from "./index";
 
 export default async function EditEbookPage({ params }) {
 	const user = await getAuthenticatedUser();
@@ -17,8 +17,11 @@ export default async function EditEbookPage({ params }) {
 		redirect("/login");
 	}
 
-	const { id } = params;
-	const content = await getEbookUserContentById(id, ebookUser.id);
+	const { content_number } = params;
+	const content = await getEbookUserContentByNumber(
+		content_number,
+		ebookUser.id,
+	);
 
 	if (!content) {
 		redirect("/dashboard");
@@ -27,11 +30,12 @@ export default async function EditEbookPage({ params }) {
 	const templates = await getEbookTemplateList();
 
 	return (
-		<EditEbookForm
+		<Detail
 			user={user}
 			ebookUser={ebookUser}
 			content={content}
 			templates={templates}
+			readOnly={content.is_published}
 		/>
 	);
 }

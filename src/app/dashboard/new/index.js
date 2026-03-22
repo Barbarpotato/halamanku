@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import styles from "./new.module.css";
 
 // Services
 import { validateEbookUserContentForm } from "@/services/userContent/validation";
@@ -10,8 +9,9 @@ import { createEbookUserContent } from "@/services/userContent/create";
 
 // Components
 import PageHeader from "@/components/PageHeader";
+import Breadcrumb from "@/components/Breadcrumb";
 
-export default function NewEbookForm({ user, ebookUser, templates }) {
+export default function New({ user, ebookUser, templates }) {
 	const router = useRouter();
 
 	const [loading, setLoading] = useState(false);
@@ -32,7 +32,6 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 		}));
 	};
 
-	// 🔒 HARD VALIDATION (no weak logic)
 	const validateForm = () => {
 		return validateEbookUserContentForm(formData, ebookUser);
 	};
@@ -44,7 +43,6 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 
 		setError(null);
 
-		// 🚨 STEP 1: VALIDATE FIRST
 		const validationError = validateForm();
 		if (validationError) {
 			setError(validationError);
@@ -55,8 +53,7 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 
 		try {
 			const data = await createEbookUserContent(formData, ebookUser);
-			// 🚀 STEP 5: NAVIGATE
-			router.push(`/dashboard/ebook/${data.id}/edit`);
+			router.push(`/dashboard/${data.ebook_user_content_number}/detail`);
 		} catch (err) {
 			setError(err.message || "Something went wrong");
 		} finally {
@@ -66,20 +63,20 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 
 	return (
 		<div className="page-container">
-			<PageHeader
-				breadcrumb={[
-					{ label: "Dashboard", href: "/dashboard" },
-					{ label: "Create" },
-				]}
-			/>
+			<PageHeader user={user} ebookUser={ebookUser} showUserInfo={true} />
 
-			<main className={styles.main}>
+			<main className="main">
 				<div className="page-header">
 					<div>
-						<h1 className="page-header-title">Create New Ebook</h1>
-						<p className="page-header-description">
-							Fill in the details to create your new ebook
-						</p>
+						<Breadcrumb
+							items={[
+								{ label: "Dashboard", href: "/dashboard" },
+								{
+									label: "Create",
+								},
+							]}
+						/>
+						<h1 className="page-header-title">Create</h1>
 					</div>
 				</div>
 
@@ -166,7 +163,7 @@ export default function NewEbookForm({ user, ebookUser, templates }) {
 							disabled={loading}
 							className="btn-primary"
 						>
-							{loading ? "Creating..." : "Create Ebook"}
+							{loading ? "Creating..." : "Create"}
 						</button>
 					</div>
 				</form>

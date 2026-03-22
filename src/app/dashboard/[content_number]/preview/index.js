@@ -4,7 +4,7 @@ import { useRef, useEffect } from "react";
 import styles from "./preview.module.css";
 import { createClient } from "@/lib/supabase/client"; // your client-side Supabase helper
 
-export default function PreviewContent({ content, template }) {
+export default function Preview({ content, template }) {
 	const iframeRef = useRef(null);
 
 	// Fetch Supabase session in the client
@@ -60,7 +60,7 @@ export default function PreviewContent({ content, template }) {
 					Please go back to the edit page and create the preview.
 				</p>
 				<a
-					href={`/dashboard/ebook/${content.id}/edit`}
+					href={`/dashboard/${content.ebook_user_content_number}/detail`}
 					style={{ color: "blue", textDecoration: "underline" }}
 				>
 					Go to Edit Page

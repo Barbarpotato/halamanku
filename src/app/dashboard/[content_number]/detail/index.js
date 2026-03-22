@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import styles from "../../new/new.module.css";
 import { useModal } from "@/components/ModalProvider";
 
 // Services
@@ -22,8 +21,15 @@ import TabActions from "./components/TabActions";
 import BasicInfoTab from "./components/BasicInfoTab";
 import PdfTab from "./components/PdfTab";
 import PreviewTab from "./components/PreviewTab";
+import Breadcrumb from "@/components/Breadcrumb";
 
-export default function EditEbookForm({ user, ebookUser, content, templates }) {
+export default function Detail({
+	user,
+	ebookUser,
+	content,
+	templates,
+	readOnly = false,
+}) {
 	const router = useRouter();
 	const modal = useModal();
 	const [loading, setLoading] = useState(false);
@@ -292,20 +298,21 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 
 	return (
 		<div className="page-container">
-			<PageHeader
-				breadcrumb={[
-					{ label: "Dashboard", href: "/dashboard" },
-					{ label: "Edit" },
-				]}
-			/>
+			<PageHeader user={user} ebookUser={ebookUser} showUserInfo={true} />
 
-			<main className={styles.main}>
+			<main className="main">
 				<div className="page-header">
 					<div>
-						<h1 className="page-header-title">Edit Ebook</h1>
-						<p className="page-header-description">
-							Update your ebook details
-						</p>
+						<Breadcrumb
+							items={[
+								{ label: "Dashboard", href: "/dashboard" },
+								{
+									label: "Detail",
+								},
+							]}
+						/>
+
+						<h1 className="page-header-title">Detail</h1>
 					</div>
 
 					{/* Header Actions: Delete, Publish, Create Preview */}
@@ -328,6 +335,7 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 							ebook_user: ebookUser,
 						}}
 						user={user}
+						readOnly={readOnly}
 					/>
 				</div>
 
@@ -347,7 +355,7 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 							className={`tab-button ${activeTab === "basic" ? "active" : ""}`}
 							onClick={() => setActiveTab("basic")}
 						>
-							Basic Information
+							General
 						</button>
 						<button
 							type="button"
@@ -372,19 +380,23 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 						className={`tab-content ${activeTab === "basic" ? "active" : ""}`}
 					>
 						<BasicInfoTab
+							content={content}
 							formData={formData}
 							handleChange={handleChange}
 							templates={templates}
+							readOnly={readOnly}
 						/>
-						<div className="actions-row">
-							<button
-								type="submit"
-								disabled={loading}
-								className="btn-primary"
-							>
-								{loading ? "Saving..." : "Save Changes"}
-							</button>
-						</div>
+						{!readOnly && (
+							<div className="actions-row">
+								<button
+									type="submit"
+									disabled={loading}
+									className="btn-primary"
+								>
+									{loading ? "Saving..." : "Save Changes"}
+								</button>
+							</div>
+						)}
 					</div>
 
 					<div
@@ -402,6 +414,7 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 							content={content}
 							showLoader={showLoader}
 							uploadWorkerStatus={uploadWorkerStatus}
+							readOnly={readOnly}
 						/>
 					</div>
 
@@ -410,7 +423,9 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 							className={`tab-content ${activeTab === "preview" ? "active" : ""}`}
 						>
 							<PreviewTab
-								contentId={content.id}
+								contentNumber={
+									content.ebook_user_content_number
+								}
 								isActive={activeTab === "preview"}
 								previewCode={
 									content.ebook_template_preview_code
@@ -419,6 +434,7 @@ export default function EditEbookForm({ user, ebookUser, content, templates }) {
 								onCreatePreview={handleCreatePreview}
 								previewWorkerStatus={previewWorkerStatus}
 								showPreviewLoader={showPreviewLoader}
+								readOnly={readOnly}
 							/>
 						</div>
 					)}

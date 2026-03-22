@@ -1,7 +1,7 @@
 import { getAuthenticatedUser, getEbookUser } from "@/services/user/auth";
 import { getEbookTemplateList } from "@/services/ebookTemplate/get";
 import { redirect } from "next/navigation";
-import NewEbookForm from "./NewEbookForm";
+import New from "./index";
 
 export default async function NewEbookPage() {
 	const user = await getAuthenticatedUser();
@@ -18,7 +18,5 @@ export default async function NewEbookPage() {
 
 	const templates = await getEbookTemplateList();
 
-	return (
-		<NewEbookForm user={user} ebookUser={ebookUser} templates={templates} />
-	);
+	return <New user={user} ebookUser={ebookUser} templates={templates} />;
 }

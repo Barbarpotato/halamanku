@@ -1,12 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 
-export const getEbookUserContentById = async (contentId, ebookUserId) => {
+export const getEbookUserContentByNumber = async (
+	contentNumber,
+	ebookUserId,
+) => {
 	const supabase = await createClient();
 
 	const { data: content, error: contentError } = await supabase
 		.from("ebook_user_content")
 		.select("*")
-		.eq("id", contentId)
+		.eq("ebook_user_content_number", contentNumber)
 		.eq("ebook_user_id", ebookUserId)
 		.single();
 
