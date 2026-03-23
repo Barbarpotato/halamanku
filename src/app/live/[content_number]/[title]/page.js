@@ -70,7 +70,9 @@ export default async function LivePage({ params }) {
 	} = await supabase.auth.getUser();
 
 	if (!user) {
-		const redirectTo = `${location.origin}/auth/callback?next=/live/${contentNumber}/${title}`;
+		const baseUrl =
+			process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+		const redirectTo = `${baseUrl}/auth/callback?next=/live/${contentNumber}/${title}`;
 
 		const { data, error } = await supabase.auth.signInWithOAuth({
 			provider: "google",
