@@ -2,28 +2,35 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useSearchParams } from "next/navigation";
 import styles from "./login.module.css";
 
 export default function LoginPage() {
 	const [loading, setLoading] = useState(false);
 	const supabase = createClient();
+	const searchParams = useSearchParams();
+
+	const next = searchParams.get("next") || "/dashboard";
 
 	const handleGoogleSignIn = async () => {
 		try {
 			setLoading(true);
+
 			const { error } = await supabase.auth.signInWithOAuth({
 				provider: "google",
 				options: {
-					redirectTo: `${location.origin}/auth/callback`,
+					redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(
+						next,
+					)}`,
 				},
 			});
 
 			if (error) {
 				console.error("Error signing in:", error.message);
+				setLoading(false);
 			}
 		} catch (error) {
 			console.error("Error:", error);
-		} finally {
 			setLoading(false);
 		}
 	};
@@ -41,7 +48,6 @@ export default function LoginPage() {
 						/>
 					</div>
 					<h1>Welcome to Halamanku</h1>
-
 					<p>Sign in to manage your ebooks</p>
 				</div>
 
@@ -60,7 +66,6 @@ export default function LoginPage() {
 									height="20"
 									viewBox="0 0 24 24"
 									fill="none"
-									xmlns="http://www.w3.org/2000/svg"
 								>
 									<path
 										d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

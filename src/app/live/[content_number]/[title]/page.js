@@ -12,6 +12,7 @@ export default async function LivePage({ params }) {
 
 	const supabase = await createClient();
 
+	// ✅ Check content first
 	const { data: content, error: contentError } = await supabase
 		.from("ebook_user_content")
 		.select(
@@ -26,9 +27,7 @@ export default async function LivePage({ params }) {
 			<div className={styles.container}>
 				<div className={styles.error}>
 					<h1>Content Not Found</h1>
-					<p>
-						The requested content could not be found. Invalid title.
-					</p>
+					<p>The requested content could not be found.</p>
 				</div>
 			</div>
 		);
@@ -42,10 +41,7 @@ export default async function LivePage({ params }) {
 			<div className={styles.container}>
 				<div className={styles.error}>
 					<h1>Content Not Available</h1>
-					<p>
-						This content has not been published yet or is not
-						accessible.
-					</p>
+					<p>This content is not accessible.</p>
 				</div>
 			</div>
 		);
@@ -56,86 +52,41 @@ export default async function LivePage({ params }) {
 			<div className={styles.container}>
 				<div className={styles.error}>
 					<h1>Content Not Available</h1>
-					<p>
-						This content is published but the site URL is not
-						available.
-					</p>
+					<p>Missing site URL.</p>
 				</div>
 			</div>
 		);
 	}
 
+	// ✅ Auth check
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();
 
+	// 🚨 ONLY REDIRECT — NO OAUTH HERE
 	if (!user) {
-		const baseUrl =
-			process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-		const redirectTo = `${baseUrl}/auth/callback?next=/live/${contentNumber}/${title}`;
-
-		const { data, error } = await supabase.auth.signInWithOAuth({
-			provider: "google",
-			options: {
-				redirectTo,
-			},
-		});
-
-		if (error) {
-			console.error("OAuth redirect error:", error);
-			return (
-				<div className={styles.container}>
-					<div className={styles.error}>
-						<h1>Login Gagal</h1>
-						<p>{error.message}</p>
-					</div>
-				</div>
-			);
-		}
-
-		if (data.url) {
-			redirect(data.url);
-		}
-
-		return (
-			<div className={styles.container}>
-				<div className={styles.error}>
-					<h1>Silakan Login</h1>
-					<p>
-						Anda perlu login dengan Google untuk mengakses ebook
-						ini.
-					</p>
-				</div>
-			</div>
+		redirect(
+			`/login?next=${encodeURIComponent(
+				`/live/${contentNumber}/${title}`,
+			)}`,
 		);
 	}
 
+	// ✅ Get session
 	const {
 		data: { session },
 	} = await supabase.auth.getSession();
+
 	const accessToken = session?.access_token;
 
 	if (!accessToken) {
-		return (
-			<div className={styles.container}>
-				<div className={styles.error}>
-					<h1>Token Tidak Ditemukan</h1>
-					<p>
-						Terjadi kesalahan saat mengambil token autentikasi. Coba
-						login ulang.
-					</p>
-				</div>
-			</div>
-		);
+		redirect("/login");
 	}
 
 	const iframeSrc = `${content.publish_site_url}?token=${encodeURIComponent(accessToken)}`;
 
 	return (
-		<div
-			className={styles.container}
-			style={{ height: "100vh", width: "100%" }}
-		>
+		<div className={styles.container} style={{ height: "100vh" }}>
 			<iframe
 				src={iframeSrc}
 				className={styles.iframe}
