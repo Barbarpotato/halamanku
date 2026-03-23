@@ -8,26 +8,22 @@ export async function GET(request) {
 	const code = searchParams.get("code");
 	const nextParam = searchParams.get("next");
 
-	// ✅ Default redirect
 	let next = "/dashboard";
 
-	// ✅ Decode base64 next param safely
 	if (nextParam) {
 		try {
-			next = Buffer.from(nextParam, "base64").toString("utf-8");
+			next = decodeURIComponent(nextParam);
 		} catch (e) {
 			console.error("Invalid next param");
 		}
 	}
 
-	// ❌ No code → go back to login
 	if (!code) {
 		return NextResponse.redirect(`${origin}/login`);
 	}
 
 	const supabase = await createClient();
 
-	// ✅ Exchange code for session
 	const { data: sessionData, error: sessionError } =
 		await supabase.auth.exchangeCodeForSession(code);
 
@@ -39,7 +35,6 @@ export async function GET(request) {
 	const user = sessionData.user;
 
 	if (user) {
-		// ✅ Check if user exists
 		const { data: existingUser, error: fetchError } = await supabase
 			.from("ebook_user")
 			.select("id")
@@ -50,7 +45,6 @@ export async function GET(request) {
 			console.error("Error fetching user:", fetchError);
 		}
 
-		// ✅ Create user if not exists
 		if (!existingUser) {
 			const { error: insertError } = await supabase
 				.from("ebook_user")
@@ -71,6 +65,5 @@ export async function GET(request) {
 		}
 	}
 
-	// ✅ Final redirect
 	return NextResponse.redirect(`${origin}${next}`);
 }
