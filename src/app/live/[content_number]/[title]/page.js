@@ -80,7 +80,11 @@ export default async function LivePage({ params }) {
 	const accessToken = session?.access_token;
 
 	if (!accessToken) {
-		redirect("/login");
+		redirect(
+			`/login?next=${encodeURIComponent(
+				`/live/${contentNumber}/${title}`,
+			)}`,
+		);
 	}
 
 	const iframeSrc = `${content.publish_site_url}?token=${encodeURIComponent(accessToken)}`;

@@ -12,6 +12,9 @@ export default function LoginPage() {
 
 	const next = searchParams.get("next") || "/dashboard";
 
+	// encode safely
+	const encodedNext = btoa(next);
+
 	const handleGoogleSignIn = async () => {
 		try {
 			setLoading(true);
@@ -19,9 +22,7 @@ export default function LoginPage() {
 			const { error } = await supabase.auth.signInWithOAuth({
 				provider: "google",
 				options: {
-					redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(
-						next,
-					)}`,
+					redirectTo: `${location.origin}/auth/callback?next=${encodedNext}`,
 				},
 			});
 

@@ -4,63 +4,73 @@ import { NextResponse } from "next/server";
 
 export async function GET(request) {
 	const { searchParams, origin } = new URL(request.url);
+
 	const code = searchParams.get("code");
-	const state = searchParams.get("state");
-	const next = state || "/dashboard";
+	const nextParam = searchParams.get("next");
 
-	if (code) {
-		const supabase = await createClient();
+	// ✅ Default redirect
+	let next = "/dashboard";
 
-		// Exchange code for session
-		const { data: sessionData, error: sessionError } =
-			await supabase.auth.exchangeCodeForSession(code);
-
-		if (sessionError) {
-			console.error("Error exchanging code for session:", sessionError);
-			return NextResponse.redirect(`${origin}/login?error=auth_error`);
+	// ✅ Decode base64 next param safely
+	if (nextParam) {
+		try {
+			next = Buffer.from(nextParam, "base64").toString("utf-8");
+		} catch (e) {
+			console.error("Invalid next param");
 		}
-
-		const user = sessionData.user;
-
-		if (user) {
-			// Check if user exists in ebook_user table
-			const { data: existingUser, error: fetchError } = await supabase
-				.from("ebook_user")
-				.select("*")
-				.eq("auth_user_id", user.id)
-				.single();
-
-			if (fetchError && fetchError.code !== "PGRST116") {
-				console.error("Error fetching user:", fetchError);
-			}
-
-			// If user doesn't exist, create them in ebook_user table
-			if (!existingUser) {
-				const { error: insertError } = await supabase
-					.from("ebook_user")
-					.insert([
-						{
-							auth_user_id: user.id,
-							email_address: user.email,
-							name:
-								user.user_metadata?.full_name ||
-								user.email?.split("@")[0] ||
-								"User",
-							user_number: `USR-${randomBytes(8).toString("hex")}`,
-							is_premium: false,
-						},
-					]);
-
-				if (insertError) {
-					console.error("Error creating user:", insertError);
-				}
-			}
-		}
-
-		// Redirect to dashboard
-		return NextResponse.redirect(`${origin}${next}`);
 	}
 
-	// No code provided, redirect to login
-	return NextResponse.redirect(`${origin}/login`);
+	// ❌ No code → go back to login
+	if (!code) {
+		return NextResponse.redirect(`${origin}/login`);
+	}
+
+	const supabase = await createClient();
+
+	// ✅ Exchange code for session
+	const { data: sessionData, error: sessionError } =
+		await supabase.auth.exchangeCodeForSession(code);
+
+	if (sessionError) {
+		console.error("Error exchanging code for session:", sessionError);
+		return NextResponse.redirect(`${origin}/login?error=auth_error`);
+	}
+
+	const user = sessionData.user;
+
+	if (user) {
+		// ✅ Check if user exists
+		const { data: existingUser, error: fetchError } = await supabase
+			.from("ebook_user")
+			.select("id")
+			.eq("auth_user_id", user.id)
+			.maybeSingle();
+
+		if (fetchError) {
+			console.error("Error fetching user:", fetchError);
+		}
+
+		// ✅ Create user if not exists
+		if (!existingUser) {
+			const { error: insertError } = await supabase
+				.from("ebook_user")
+				.insert({
+					auth_user_id: user.id,
+					email_address: user.email,
+					name:
+						user.user_metadata?.full_name ||
+						user.email?.split("@")[0] ||
+						"User",
+					user_number: `USR-${randomBytes(8).toString("hex")}`,
+					is_premium: false,
+				});
+
+			if (insertError) {
+				console.error("Error creating user:", insertError);
+			}
+		}
+	}
+
+	// ✅ Final redirect
+	return NextResponse.redirect(`${origin}${next}`);
 }
