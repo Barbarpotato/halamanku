@@ -72,8 +72,7 @@ export default async function LivePage({ params }) {
 	if (!user) {
 		const baseUrl =
 			process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-		const currentPath = `/live/${contentNumberParam}/${titleParam}`;
-		const redirectTo = `${baseUrl}${currentPath}`;
+		const redirectTo = `${baseUrl}`;
 
 		const { data, error } = await supabase.auth.signInWithOAuth({
 			provider: "google",
