@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useModal } from "@/components/ModalProvider";
@@ -15,6 +15,7 @@ import TabActions from "./components/TabActions";
 import BasicInfoTab from "./components/BasicInfoTab";
 import PdfTab from "./components/PdfTab";
 import PreviewTab from "./components/PreviewTab";
+import AccessTab from "./components/AccessTab";
 import Breadcrumb from "@/components/Breadcrumb";
 
 export default function Detail({
@@ -31,6 +32,8 @@ export default function Detail({
 
 	// Tab state
 	const [activeTab, setActiveTab] = useState("basic");
+	const [hasOverflow, setHasOverflow] = useState(false);
+	const tabsRef = useRef(null);
 
 	const [formData, setFormData] = useState({
 		ebook_template_id: content.ebook_template_id || "",
@@ -82,6 +85,21 @@ export default function Detail({
 		}
 	}, [workerData]);
 
+	// Check for tab overflow
+	useEffect(() => {
+		const checkOverflow = () => {
+			if (tabsRef.current) {
+				const { scrollWidth, clientWidth } = tabsRef.current;
+				setHasOverflow(scrollWidth > clientWidth);
+			}
+		};
+
+		checkOverflow();
+		window.addEventListener("resize", checkOverflow);
+
+		return () => window.removeEventListener("resize", checkOverflow);
+	}, []);
+
 	// Determine if we should show loader (PROCESSING status)
 	const showLoader = workerStatuses.upload === "PROCESSING";
 
@@ -109,10 +127,6 @@ export default function Detail({
 		try {
 			await updateEbookUserContent(content.id, formData);
 			router.refresh();
-			modal.show({
-				type: "info",
-				message: "Ebook updated successfully!",
-			});
 		} catch (err) {
 			setError(err.message);
 		} finally {
@@ -164,9 +178,11 @@ export default function Detail({
 						name="template_preview_code"
 						value={formData.template_preview_code}
 					/>
-
 					{/* Tabs Navigation */}
-					<div className="tabs-container">
+					<div
+						ref={tabsRef}
+						className={`tabs-container ${hasOverflow ? "has-overflow" : ""}`}
+					>
 						<button
 							type="button"
 							className={`tab-button ${activeTab === "basic" ? "active" : ""}`}
@@ -181,6 +197,7 @@ export default function Detail({
 						>
 							PDF
 						</button>
+
 						{showPreviewTab && (
 							<button
 								type="button"
@@ -189,6 +206,36 @@ export default function Detail({
 							>
 								Preview
 							</button>
+						)}
+
+						{content.is_published == true && (
+							<button
+								type="button"
+								className={`tab-button ${activeTab === "access" ? "active" : ""}`}
+								onClick={() => setActiveTab("access")}
+							>
+								Access
+							</button>
+						)}
+
+						{hasOverflow && (
+							<div className="scroll-indicator">
+								<svg
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									xmlns="http://www.w3.org/2000/svg"
+								>
+									<path
+										d="M9 18l6-6-6-6"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									/>
+								</svg>
+							</div>
 						)}
 					</div>
 
@@ -225,6 +272,16 @@ export default function Detail({
 							showLoader={showLoader}
 							uploadWorkerStatus={workerStatuses.upload}
 							readOnly={readOnly}
+						/>
+					</div>
+
+					<div
+						className={`tab-content ${activeTab === "access" ? "active" : ""}`}
+					>
+						<AccessTab
+							content={content}
+							readOnly={readOnly}
+							modal={modal}
 						/>
 					</div>
 
