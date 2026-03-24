@@ -7,7 +7,7 @@ export async function POST(request, { params }) {
 	try {
 		const body = await request.json();
 
-		const signature = request.headers.get("x-lynk-signature");
+		const signature = request.headers.get("X-Lynk-Signature");
 
 		if (!signature) {
 			return NextResponse.json(
