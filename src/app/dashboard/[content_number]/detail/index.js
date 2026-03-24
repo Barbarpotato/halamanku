@@ -45,7 +45,6 @@ export default function Detail({
 	// Consolidated worker statuses
 	const [workerStatuses, setWorkerStatuses] = useState({
 		upload: content.upload_worker_status || "IDLE",
-		publish: content.publish_worker_status || "IDLE",
 	});
 
 	const { data: workerData } = useQuery({
@@ -85,8 +84,6 @@ export default function Detail({
 
 	// Determine if we should show loader (PROCESSING status)
 	const showLoader = workerStatuses.upload === "PROCESSING";
-
-	const showPublishLoader = workerStatuses.publish === "PROCESSING";
 
 	// Determine if delete button should be visible
 	// Delete button: only visible if upload_worker_status == IDLE, FAILED OR SUCCESS
@@ -151,8 +148,6 @@ export default function Detail({
 						showDeleteButton={showDeleteButton}
 						formData={formData}
 						loading={loading}
-						publishWorkerStatus={workerStatuses.publish}
-						showPublishLoader={showPublishLoader}
 						content={{
 							...content,
 							ebook_user: ebookUser,
@@ -215,7 +210,7 @@ export default function Detail({
 									disabled={loading}
 									className="btn-primary"
 								>
-									{loading ? "Saving..." : "Save Changes"}
+									{loading ? "Loading..." : "Save Changes"}
 								</button>
 							</div>
 						)}

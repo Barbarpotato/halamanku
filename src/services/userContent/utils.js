@@ -18,7 +18,7 @@ export const getLiveUrl = (content, ebookUser) => {
 export const getWorkerStatuses = async (contentId) => {
 	const { data, error } = await supabase
 		.from("ebook_user_content")
-		.select("upload_worker_status, publish_worker_status")
+		.select("upload_worker_status")
 		.eq("id", contentId)
 		.single();
 
@@ -26,6 +26,5 @@ export const getWorkerStatuses = async (contentId) => {
 
 	return {
 		upload: data.upload_worker_status || "IDLE",
-		publish: data.publish_worker_status || "IDLE",
 	};
 };

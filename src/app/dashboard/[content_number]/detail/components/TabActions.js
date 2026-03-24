@@ -16,14 +16,11 @@ export default function TabActions({
 	showDeleteButton,
 	formData,
 	loading,
-	creatingPreview,
-	publishWorkerStatus,
 	content,
 	readOnly = false,
 }) {
 	const modal = useModal();
 
-	const [publishing, setPublishing] = useState(false);
 	const [menuOpen, setMenuOpen] = useState(false);
 
 	// Check if any dropdown item is available
@@ -33,8 +30,7 @@ export default function TabActions({
 	const isPublished = content.is_published === true;
 
 	// Check if content is LIVE (published successfully)
-	const isLive =
-		publishWorkerStatus === "SUCCESS" && content?.is_published === true;
+	const isLive = content?.is_published === true;
 
 	// Get the live URL
 	const liveUrl = getLiveUrl(content, content?.ebook_user);
@@ -64,19 +60,21 @@ export default function TabActions({
 		});
 		if (!result) return;
 
-		setPublishing(true);
+		setLoading(true);
 		setError(null);
 
 		try {
-			await publishEbookUserContent(formData, content);
+			await publishEbookUserContent(formData);
 			modal.show({
 				type: "info",
 				message:
 					"Ebook is being published. Please Wait for a while to see your page",
 			});
+			router.refresh();
+			setLoading(false);
 		} catch (err) {
 			setError(err.message);
-			setPublishing(false);
+			setLoading(false);
 		}
 	};
 
@@ -152,12 +150,7 @@ export default function TabActions({
 											setMenuOpen(false);
 										}}
 										disabled={
-											loading ||
-											formData.is_published ||
-											publishing ||
-											publishWorkerStatus ===
-												"PROCESSING" ||
-											creatingPreview
+											loading || formData.is_published
 										}
 										className="dropdown-item flex"
 									>
@@ -190,14 +183,7 @@ export default function TabActions({
 											handleDelete();
 											setMenuOpen(false);
 										}}
-										disabled={
-											loading ||
-											isPublished ||
-											publishing ||
-											publishWorkerStatus ===
-												"PROCESSING" ||
-											creatingPreview
-										}
+										disabled={loading || isPublished}
 										className="dropdown-item flex"
 									>
 										<svg

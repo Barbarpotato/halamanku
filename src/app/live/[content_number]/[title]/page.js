@@ -1,104 +1,140 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useParams, useRouter } from "next/navigation";
+import { useRef, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import styles from "./live.module.css";
 
-export const dynamic = "force-dynamic";
+export default function TestPage() {
+	const params = useParams();
+	const router = useRouter();
+	const iframeRef = useRef(null);
+	const [content, setContent] = useState(null);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState(null);
 
-export default async function LivePage({ params }) {
-	const { content_number: contentNumberParam, title: titleParam } = params;
+	const contentNumber = decodeURIComponent(params.content_number);
+	const title = decodeURIComponent(params.title).replace(/-/g, " ");
 
-	const contentNumber = decodeURIComponent(contentNumberParam);
-	const title = decodeURIComponent(titleParam).replace(/-/g, " ");
+	useEffect(() => {
+		const fetchContent = async () => {
+			const supabase = createClient();
 
-	const supabase = await createClient();
+			// Auth check
+			const {
+				data: { user },
+			} = await supabase.auth.getUser();
+			if (!user) {
+				router.push(
+					`/login?next=${encodeURIComponent(`/test/${params.content_number}/${params.title}`)}`,
+				);
+				return;
+			}
 
-	// ✅ Check content first
-	const { data: content, error: contentError } = await supabase
-		.from("ebook_user_content")
-		.select(
-			"id, ebook_user_content_number, ebook_user_content_title, publish_site_url, is_published, publish_worker_status",
-		)
-		.eq("ebook_user_content_number", contentNumber)
-		.eq("ebook_user_content_title", title)
-		.single();
+			// Get session
+			const {
+				data: { session },
+			} = await supabase.auth.getSession();
+			if (!session?.access_token) {
+				router.push(
+					`/login?next=${encodeURIComponent(`/test/${params.content_number}/${params.title}`)}`,
+				);
+				return;
+			}
 
-	if (contentError || !content) {
+			// Store access token for iframe
+			sessionStorage.setItem("access_token", session.access_token);
+
+			// Fetch content
+			const { data: contentData, error: contentError } = await supabase
+				.from("ebook_user_content")
+				.select(
+					"id, ebook_user_content_number, ebook_user_content_title, is_published, ebook_template_publish_code",
+				)
+				.eq("ebook_user_content_number", contentNumber)
+				.eq("ebook_user_content_title", title)
+				.single();
+
+			if (contentError || !contentData) {
+				setError("Content Not Found");
+				setLoading(false);
+				return;
+			}
+
+			if (contentData.is_published !== true) {
+				setError("Content Not Available");
+				setLoading(false);
+				return;
+			}
+
+			setContent(contentData);
+			setLoading(false);
+		};
+
+		fetchContent();
+	}, [contentNumber, title, params.content_number, params.title, router]);
+
+	// Write HTML to iframe with injected PDF URL + session
+	useEffect(() => {
+		if (iframeRef.current && content?.ebook_template_publish_code) {
+			let htmlContent = content.ebook_template_publish_code;
+			const iframe = iframeRef.current;
+			const doc = iframe.contentDocument || iframe.contentWindow.document;
+			doc.open();
+			doc.write(htmlContent);
+			doc.close();
+		}
+	}, [content?.ebook_template_publish_code]);
+
+	if (loading) {
+		return (
+			<div
+				className={styles.container}
+				style={{
+					height: "100vh",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+				}}
+			>
+				<p>Loading...</p>
+			</div>
+		);
+	}
+
+	if (error) {
 		return (
 			<div className={styles.container}>
 				<div className={styles.error}>
-					<h1>Content Not Found</h1>
-					<p>The requested content could not be found.</p>
+					<h1>{error}</h1>
+					<p>
+						The requested content could not be found or is not
+						accessible.
+					</p>
 				</div>
 			</div>
 		);
 	}
 
-	if (
-		content.is_published !== true ||
-		content.publish_worker_status !== "SUCCESS"
-	) {
-		return (
-			<div className={styles.container}>
-				<div className={styles.error}>
-					<h1>Content Not Available</h1>
-					<p>This content is not accessible.</p>
-				</div>
-			</div>
-		);
-	}
-
-	if (!content.publish_site_url) {
-		return (
-			<div className={styles.container}>
-				<div className={styles.error}>
-					<h1>Content Not Available</h1>
-					<p>Missing site URL.</p>
-				</div>
-			</div>
-		);
-	}
-
-	// ✅ Auth check
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	// 🚨 ONLY REDIRECT — NO OAUTH HERE
-	if (!user) {
-		redirect(
-			`/login?next=${encodeURIComponent(
-				`/live/${contentNumber}/${title}`,
-			)}`,
-		);
-	}
-
-	// ✅ Get session
-	const {
-		data: { session },
-	} = await supabase.auth.getSession();
-
-	const accessToken = session?.access_token;
-
-	if (!accessToken) {
-		redirect(
-			`/login?next=${encodeURIComponent(
-				`/live/${contentNumber}/${title}`,
-			)}`,
-		);
-	}
-
-	const iframeSrc = `${content.publish_site_url}?token=${encodeURIComponent(accessToken)}`;
-
-	return (
-		<div className={styles.container} style={{ height: "100vh" }}>
-			<iframe
-				src={iframeSrc}
-				className={styles.iframe}
-				title={content.ebook_user_content_title}
-				frameBorder="0"
-				allowFullScreen
-				style={{ width: "100%", height: "100%", border: "none" }}
-			/>
+	return content?.ebook_template_publish_code ? (
+		<iframe
+			ref={iframeRef}
+			className={styles.iframe}
+			title="Ebook Test"
+			sandbox="allow-scripts allow-same-origin allow-forms"
+			style={{ width: "100%", height: "100vh", border: "none" }}
+		/>
+	) : (
+		<div
+			className={styles.container}
+			style={{
+				height: "100vh",
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center",
+			}}
+		>
+			<p>No content available.</p>
 		</div>
 	);
 }
