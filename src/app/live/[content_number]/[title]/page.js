@@ -26,7 +26,7 @@ export default function TestPage() {
 			} = await supabase.auth.getUser();
 			if (!user) {
 				router.push(
-					`/login?next=${encodeURIComponent(`/test/${params.content_number}/${params.title}`)}`,
+					`/login?next=${encodeURIComponent(`/live/${params.content_number}/${params.title}`)}`,
 				);
 				return;
 			}
@@ -37,7 +37,7 @@ export default function TestPage() {
 			} = await supabase.auth.getSession();
 			if (!session?.access_token) {
 				router.push(
-					`/login?next=${encodeURIComponent(`/test/${params.content_number}/${params.title}`)}`,
+					`/login?next=${encodeURIComponent(`/live/${params.content_number}/${params.title}`)}`,
 				);
 				return;
 			}
