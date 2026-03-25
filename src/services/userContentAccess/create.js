@@ -23,19 +23,21 @@ export const createEbookUserContentAccess = async (
 
 	const { data, error } = await supabase
 		.from("ebook_user_content_access")
-		.insert([
+		.upsert(
 			{
 				ebook_user_content_id: contentId,
 				ebook_user_content_number: contentNumber,
 				email_address: emailAddress.trim(),
-				auth_user_id: null, // Will be set when user claims access
+				auth_user_id: null,
 				lynk_id_reference_id: ``,
 				storage_shard_name: storageFileName,
 			},
-		])
+			{
+				onConflict: "email_address,ebook_user_content_number",
+			},
+		)
 		.select()
 		.single();
-
 	if (error) {
 		throw error;
 	}

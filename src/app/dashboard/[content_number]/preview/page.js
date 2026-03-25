@@ -17,7 +17,7 @@ export default async function PreviewPage({ params }) {
 		redirect("/login");
 	}
 
-	const { content_number } = params;
+	const { content_number } = await params;
 	const content = await getEbookUserContentByNumber(
 		content_number,
 		ebookUser.id,

@@ -70,7 +70,7 @@ export async function POST(request, { params }) {
 				.from("ebook_user_content")
 				.select("*")
 				.eq("ebook_user_id", ebookUser.id)
-				.in("ebook_content_title", itemTitleList);
+				.in("ebook_user_content_title", itemTitleList);
 
 			if (ebookUserContentList.length > 0) {
 				// insert the ebook_user_content_access for each ebook_user_content
