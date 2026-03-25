@@ -6,7 +6,20 @@ import { createClient } from "@/lib/supabase/server";
 export async function POST(request, { params }) {
 	const { user_number } = await params;
 
-	const secretKey = "xFp8X0l4hKAP8eU1TWzpPNGiEtfPxYN2";
+	const supabase = await createClient();
+
+	// get the ebook_user based on the user_number
+	const { data: ebookUser } = await supabase
+		.from("ebook_user")
+		.select("*")
+		.eq("user_number", user_number)
+		.single();
+
+	if (!ebookUser) {
+		return NextResponse.json({ error: "User not found" }, { status: 404 });
+	}
+
+	const secretKey = ebookUser.lynk_id_merchant_key;
 	if (!secretKey) {
 		return NextResponse.json(
 			{ error: "Server misconfigured" },
@@ -52,40 +65,27 @@ export async function POST(request, { params }) {
 				);
 			}
 
-			const supabase = await createClient();
-
-			// get the ebook_user based on the user_number
-			const { data: ebookUser } = await supabase
-				.from("ebook_user")
+			// get the ebook_user_content -> ebook_content_title based on the itemTitleList
+			const { data: ebookUserContentList } = await supabase
+				.from("ebook_user_content")
 				.select("*")
-				.eq("user_number", user_number)
-				.single();
+				.eq("ebook_user_id", ebookUser.id)
+				.in("ebook_content_title", itemTitleList);
 
-			if (ebookUser) {
-				// get the ebook_user_content -> ebook_content_title based on the itemTitleList
-				const { data: ebookUserContentList } = await supabase
-					.from("ebook_user_content")
-					.select("*")
-					.eq("ebook_user_id", ebookUser.id)
-					.in("ebook_content_title", itemTitleList);
-
-				if (ebookUserContentList.length > 0) {
-					// insert the ebook_user_content_access for each ebook_user_content
-					for (const ebookUserContent of ebookUserContentList) {
-						await createEbookUserContentAccess(
-							ebookUserContent.ebook_user_content_number,
-							emailAddress,
-							ebookUserContent.id,
-						);
-					}
+			if (ebookUserContentList.length > 0) {
+				// insert the ebook_user_content_access for each ebook_user_content
+				for (const ebookUserContent of ebookUserContentList) {
+					await createEbookUserContentAccess(
+						ebookUserContent.ebook_user_content_number,
+						emailAddress,
+						ebookUserContent.id,
+					);
 				}
 			}
 		}
 
 		return NextResponse.json({ success: true });
 	} catch (err) {
-		console.error("🔥 Webhook error:", err);
-
 		return NextResponse.json(
 			{ error: "Internal server error" },
 			{ status: 500 },
