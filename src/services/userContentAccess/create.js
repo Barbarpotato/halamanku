@@ -6,6 +6,7 @@ export const createEbookUserContentAccess = async (
 	contentNumber,
 	emailAddress,
 	contentId,
+	refId,
 ) => {
 	// get the ebook_user_content data from the contentNumber
 	const { data: content } = await supabase
@@ -29,7 +30,7 @@ export const createEbookUserContentAccess = async (
 				ebook_user_content_number: contentNumber,
 				email_address: emailAddress.trim(),
 				auth_user_id: null,
-				lynk_id_reference_id: ``,
+				lynk_id_reference_id: refId,
 				storage_shard_name: storageFileName,
 			},
 			{

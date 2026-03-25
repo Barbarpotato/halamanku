@@ -79,6 +79,7 @@ export async function POST(request, { params }) {
 						ebookUserContent.ebook_user_content_number,
 						emailAddress,
 						ebookUserContent.id,
+						refId,
 					);
 				}
 			}
