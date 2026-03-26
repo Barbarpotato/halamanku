@@ -1,0 +1,11 @@
+.next
+node_modules
+npm-debug.log
+.yarn
+.vscode
+.DS_Store
+*.local
+.git
+coverage
+build
+dist
