@@ -1,22 +1,23 @@
 {
-  "name": "ebook-admin-panel",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
-    "start": "next start"
-  },
-  "dependencies": {
-    "@supabase/ssr": "^0.9.0",
-    "@supabase/supabase-js": "^2.99.1",
-    "@tanstack/react-query": "^5.90.21",
-    "next": "15.5.12",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "tailwindcss": "^3.4.19"
-  },
-  "devDependencies": {
-    "autoprefixer": "^10.4.27"
-  }
+	"name": "ebook-admin-panel",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev --turbopack",
+		"build": "next build --turbopack",
+		"start": "next start"
+	},
+	"dependencies": {
+		"@supabase/ssr": "^0.9.0",
+		"@supabase/supabase-js": "^2.99.1",
+		"@tanstack/react-query": "^5.90.21",
+		"next": "15.5.12",
+		"react": "19.1.0",
+		"react-dom": "19.1.0",
+		"react-pageflip": "^2.0.3",
+		"tailwindcss": "^3.4.19"
+	},
+	"devDependencies": {
+		"autoprefixer": "^10.4.27"
+	}
 }
