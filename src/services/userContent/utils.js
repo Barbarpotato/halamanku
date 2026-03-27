@@ -12,7 +12,7 @@ export const getLiveUrl = (content, ebookUser) => {
 	}
 	const contentNumber = content.ebook_user_content_number;
 	const title = content.ebook_user_content_title.replace(/\s+/g, "-");
-	return `/live/${encodeURIComponent(contentNumber)}/${encodeURIComponent(title)}`;
+	return `/ebook/${encodeURIComponent(contentNumber)}/${encodeURIComponent(title)}`;
 };
 
 export const getWorkerStatuses = async (contentId) => {

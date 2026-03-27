@@ -12,7 +12,7 @@ export default async function Page({ params }) {
 	const { data, error } = await supabase
 		.from("ebook_user_content")
 		.select(
-			"id, ebook_user_content_number, ebook_user_content_title, is_published, ebook_template_publish_code, storage_file_total_page",
+			"id, ebook_user_content_number, ebook_user_content_title, is_published, storage_file_total_page",
 		)
 		.eq("ebook_user_content_number", parsedContentNumber)
 		.eq("ebook_user_content_title", parsedTitle)
