@@ -16,6 +16,7 @@ export default async function Page({ params }) {
 		)
 		.eq("ebook_user_content_number", parsedContentNumber)
 		.eq("ebook_user_content_title", parsedTitle)
+		.eq("is_published", true)
 		.single();
 
 	// ❌ Content not found

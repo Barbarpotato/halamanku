@@ -4,7 +4,7 @@ import HTMLFlipBook from "react-pageflip";
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import styles from "./test.module.css";
+import styles from "./ebook.module.css";
 import Link from "next/link";
 
 const PAGE_BUFFER = 25;
