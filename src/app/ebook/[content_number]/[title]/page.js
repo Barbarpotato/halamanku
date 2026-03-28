@@ -9,8 +9,6 @@ export default async function Page({ params }) {
 	const parsedContentNumber = decodeURIComponent(content_number);
 	const parsedTitle = decodeURIComponent(title);
 
-	console.log(parsedContentNumber, parsedTitle);
-
 	const { data, error } = await supabase
 		.from("ebook_user_content")
 		.select(

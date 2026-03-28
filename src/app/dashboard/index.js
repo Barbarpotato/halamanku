@@ -44,13 +44,6 @@ export default function Index({ user, ebookUser, userContents }) {
 									{content.ebook_user_content_title ||
 										"Untitled"}
 								</h3>
-								<p className="text-sm text-gray-500 mb-2">
-									Template:{" "}
-									{content.ebook_template?.template_name ||
-										content.ebook_template
-											?.repository_name ||
-										"None"}
-								</p>
 								<p className="text-gray-600 mb-4">
 									{content.ebook_user_content_description
 										? content.ebook_user_content_description.slice(

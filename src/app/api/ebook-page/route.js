@@ -58,6 +58,6 @@ export async function GET(req) {
 			},
 		});
 	} catch (e) {
-		console.log(e);
+		console.error(e);
 	}
 }

@@ -35,52 +35,13 @@ export default function Detail({
 	const tabsRef = useRef(null);
 
 	const [formData, setFormData] = useState({
+		id: content.id || "",
 		ebook_user_content_number: content.ebook_user_content_number || "",
 		ebook_user_content_title: content.ebook_user_content_title || "",
 		ebook_user_content_description:
 			content.ebook_user_content_description || "",
 		is_published: content.is_published || false,
 	});
-
-	// Consolidated worker statuses
-	const [workerStatuses, setWorkerStatuses] = useState({
-		upload: content.upload_worker_status || "IDLE",
-	});
-
-	const { data: workerData } = useQuery({
-		queryKey: ["ebookWorkerStatus", content.id],
-		queryFn: async () => {
-			return await getWorkerStatuses(content.id);
-		},
-
-		refetchInterval: (data) => {
-			if (!data) return 1000;
-
-			const uploadDone =
-				data.upload === "SUCCESS" || data.upload === "FAILED";
-
-			const publishDone =
-				data.publish === "SUCCESS" || data.publish === "FAILED";
-
-			// stop polling if both done
-			if (uploadDone && publishDone) return false;
-
-			return 1000;
-		},
-	});
-
-	useEffect(() => {
-		if (!workerData) return;
-
-		setWorkerStatuses(workerData);
-
-		if (
-			workerData.upload === "SUCCESS" ||
-			workerData.publish === "SUCCESS"
-		) {
-			router.refresh();
-		}
-	}, [workerData]);
 
 	// Check for tab overflow
 	useEffect(() => {
@@ -97,19 +58,11 @@ export default function Detail({
 		return () => window.removeEventListener("resize", checkOverflow);
 	}, []);
 
-	// Determine if we should show loader (PROCESSING status)
-	const showLoader = workerStatuses.upload === "PROCESSING";
-
 	// Determine if delete button should be visible
-	// Delete button: only visible if upload_worker_status == IDLE, FAILED OR SUCCESS
-	const showDeleteButton =
-		workerStatuses.upload === "IDLE" ||
-		workerStatuses.upload === "FAILED" ||
-		workerStatuses.upload === "SUCCESS";
+	const showDeleteButton = !content.is_published;
 
 	// Publish button: only visible if PDF exists (storage_file_name is not null)
-	const showPublishButton =
-		!!content.storage_file_name && content.is_published === false;
+	const showPublishButton = content.is_published === false;
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -246,8 +199,6 @@ export default function Detail({
 						<PdfTab
 							setError={setError}
 							content={content}
-							showLoader={showLoader}
-							uploadWorkerStatus={workerStatuses.upload}
 							readOnly={readOnly}
 						/>
 					</div>
