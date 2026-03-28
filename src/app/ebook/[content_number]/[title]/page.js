@@ -7,15 +7,14 @@ export default async function Page({ params }) {
 	const supabase = createClient();
 
 	const parsedContentNumber = decodeURIComponent(content_number);
-	const parsedTitle = decodeURIComponent(title);
+	const parsedTitle = decodeURIComponent(title.replace(/\s+/g, "-"));
 
 	const { data, error } = await supabase
 		.from("ebook_user_content")
 		.select(
-			"id, ebook_user_content_number, ebook_user_content_title, is_published, storage_file_total_page",
+			"storage_file_total_page",
 		)
 		.eq("ebook_user_content_number", parsedContentNumber)
-		.eq("ebook_user_content_title", parsedTitle)
 		.single();
 
 	// Content not found
@@ -30,6 +29,7 @@ export default async function Page({ params }) {
 	return (
 		<EbookReader
 			contentNumber={parsedContentNumber}
+			title={parsedTitle}
 			totalPages={data.storage_file_total_page}
 		/>
 	);

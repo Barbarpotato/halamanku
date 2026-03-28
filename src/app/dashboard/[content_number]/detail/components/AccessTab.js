@@ -105,6 +105,7 @@ export default function AccessTab({ content, readOnly = false }) {
 					Manage email addresses that have access to this content
 				</p>
 			</div>
+			<hr className="section-divider"></hr>
 
 			{successMessage && (
 				<div className="success-message">
@@ -118,7 +119,7 @@ export default function AccessTab({ content, readOnly = false }) {
 				</div>
 			)}
 
-			<div className="add-access-card">
+			<div className="add-access-card mt-4">
 				<h3>Add New Access</h3>
 				<div className="add-access-form">
 					<div className="form-row">

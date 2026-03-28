@@ -34,27 +34,27 @@ export default function Index({ user, ebookUser, userContents }) {
 				</div>
 
 				{userContents && userContents.length > 0 ? (
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
 						{userContents.map((content) => (
 							<div
 								key={content.id}
 								className="bg-white p-6 rounded-lg shadow-md border"
 							>
-								<h3 className="text-lg font-semibold mb-2">
+								<h3 className="text-lg font-semibold mb-2 text-gray-800">
 									{content.ebook_user_content_title ||
 										"Untitled"}
 								</h3>
 								<p className="text-gray-600 mb-4">
 									{content.ebook_user_content_description
 										? content.ebook_user_content_description.slice(
-												0,
-												150,
-											) +
-											(content
-												.ebook_user_content_description
-												.length > 150
-												? "..."
-												: "")
+											0,
+											150,
+										) +
+										(content
+											.ebook_user_content_description
+											.length > 150
+											? "..."
+											: "")
 										: "No description"}
 								</p>
 								<div className="flex justify-between items-center">
