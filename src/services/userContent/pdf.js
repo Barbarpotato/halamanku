@@ -73,3 +73,30 @@ export const getPdfUrl = async (pdfPath) => {
 		throw new Error(result.error || "Failed to get URL");
 	}
 };
+
+
+export const deletePdf = async (storage_file_name) => {
+
+	if (!storage_file_name) {
+		throw new Error("No file to delete");
+	}
+
+	const formData = new FormData();
+	formData.append("path", storage_file_name);
+
+	const response = await fetch(STORAGE_URL, {
+		method: "DELETE",
+		headers: {
+			Authorization: `Bearer ${getAnonKey()}`,
+		},
+		body: formData,
+	});
+
+	const result = await response.json();
+
+	if (result.status !== "SUCCESS") {
+		console.error("Failed to delete file from storage:", result.error);
+	}
+
+	return true;
+};

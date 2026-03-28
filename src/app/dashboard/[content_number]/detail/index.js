@@ -2,18 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { useModal } from "@/components/ModalProvider";
 
 // Services
 import { updateEbookUserContent } from "@/services/userContent/update";
-import { getWorkerStatuses } from "@/services/userContent/utils";
 
 // Components
 import PageHeader from "@/components/PageHeader";
 import TabActions from "./components/TabActions";
 import BasicInfoTab from "./components/BasicInfoTab";
-import PdfTab from "./components/PdfTab";
 import AccessTab from "./components/AccessTab";
 import Breadcrumb from "@/components/Breadcrumb";
 
@@ -64,8 +61,7 @@ export default function Detail({
 	// Publish button: only visible if PDF exists (storage_file_name is not null)
 	const showPublishButton = content.is_published === false;
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
+	const handleSave = async () => {
 		setLoading(true);
 		setError(null);
 
@@ -115,7 +111,7 @@ export default function Detail({
 					/>
 				</div>
 
-				<form onSubmit={handleSubmit} className="form-card">
+				<form onSubmit={handleSave} className="form-card">
 					{error && <div className="error-message">{error}</div>}
 
 					{/* Tabs Navigation */}
@@ -129,13 +125,6 @@ export default function Detail({
 							onClick={() => setActiveTab("basic")}
 						>
 							General
-						</button>
-						<button
-							type="button"
-							className={`tab-button ${activeTab === "pdf" ? "active" : ""}`}
-							onClick={() => setActiveTab("pdf")}
-						>
-							PDF
 						</button>
 
 						{content.is_published == true && (
@@ -179,27 +168,10 @@ export default function Detail({
 							setFormData={setFormData}
 							templates={templates}
 							readOnly={readOnly}
-						/>
-						{!readOnly && (
-							<div className="actions-row">
-								<button
-									type="submit"
-									disabled={loading}
-									className="btn-primary"
-								>
-									{loading ? "Loading..." : "Save Changes"}
-								</button>
-							</div>
-						)}
-					</div>
-
-					<div
-						className={`tab-content ${activeTab === "pdf" ? "active" : ""}`}
-					>
-						<PdfTab
 							setError={setError}
-							content={content}
-							readOnly={readOnly}
+							modal={modal}
+							onSave={handleSave}
+							loading={loading}
 						/>
 					</div>
 
