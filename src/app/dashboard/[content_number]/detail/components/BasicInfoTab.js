@@ -19,33 +19,6 @@ export default function BasicInfoTab({
 	return (
 		<div className="mb-xl">
 			<h2 className="section-title">Basic Information</h2>
-			<div className="grid-auto-fit">
-				<div className="field">
-					<label className="field-label">Template</label>
-					{readOnly ? (
-						<div className="field-value">
-							{templates?.find(
-								(t) => t.id === content.ebook_template_id,
-							)?.template_name || "No template selected"}
-						</div>
-					) : (
-						<select
-							id="ebook_template_id"
-							name="ebook_template_id"
-							value={formData.ebook_template_id}
-							onChange={handleChange}
-							className="field-input"
-						>
-							<option value="">Select a template</option>
-							{templates.map((template) => (
-								<option key={template.id} value={template.id}>
-									{template.template_name}
-								</option>
-							))}
-						</select>
-					)}
-				</div>
-			</div>
 			<div className="field">
 				<label className="field-label">Title</label>
 				{readOnly ? (

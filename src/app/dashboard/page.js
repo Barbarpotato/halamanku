@@ -23,18 +23,7 @@ export default async function DashboardPage() {
 	// Get user's content
 	const { data: userContents } = await supabase
 		.from("ebook_user_content")
-		.select(
-			`
-      *,
-      ebook_template:ebook_template_id(
-        id,
-        owner_name,
-        repository_name,
-        file_path,
-		template_name
-      )
-    `,
-		)
+		.select(`*`)
 		.eq("ebook_user_id", ebookUser?.id)
 		.order("created", { ascending: false });
 

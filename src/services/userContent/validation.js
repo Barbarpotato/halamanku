@@ -1,11 +1,4 @@
 export const validateEbookUserContentForm = (formData, ebookUser) => {
-	if (
-		!formData.ebook_template_id ||
-		formData.ebook_template_id.trim() === ""
-	) {
-		return "Template is required";
-	}
-
 	if (!formData.ebook_user_content_title.trim()) {
 		return "Title is required";
 	}

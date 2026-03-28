@@ -4,7 +4,6 @@ const supabase = createClient();
 
 export const updateEbookUserContent = async (contentId, formData) => {
 	const updateData = {
-		ebook_template_id: formData.ebook_template_id || null,
 		ebook_user_content_number: formData.ebook_user_content_number,
 		ebook_user_content_title: formData.ebook_user_content_title,
 		ebook_user_content_description: formData.ebook_user_content_description,

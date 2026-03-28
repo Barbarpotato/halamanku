@@ -18,7 +18,6 @@ export default function New({ user, ebookUser, templates }) {
 	const [error, setError] = useState(null);
 
 	const [formData, setFormData] = useState({
-		ebook_template_id: "",
 		ebook_user_content_title: "",
 		ebook_user_content_description: "",
 	});
@@ -85,34 +84,6 @@ export default function New({ user, ebookUser, templates }) {
 
 					<div className="mb-xl">
 						<h2 className="section-title">Basic Information</h2>
-
-						{/* TEMPLATE */}
-						<div className="field">
-							<label
-								htmlFor="ebook_template_id"
-								className="field-label"
-							>
-								Template *
-							</label>
-							<select
-								id="ebook_template_id"
-								name="ebook_template_id"
-								value={formData.ebook_template_id}
-								onChange={handleChange}
-								className="field-input"
-							>
-								<option value="">-- Select Template --</option>
-								{templates.map((template) => (
-									<option
-										key={template.id}
-										value={template.id}
-									>
-										{template.template_name ||
-											`${template.owner_name}/${template.repository_name} - ${template.file_path}`}
-									</option>
-								))}
-							</select>
-						</div>
 
 						{/* TITLE */}
 						<div className="field">

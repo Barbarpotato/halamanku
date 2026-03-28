@@ -36,7 +36,6 @@ export default function Detail({
 	const tabsRef = useRef(null);
 
 	const [formData, setFormData] = useState({
-		ebook_template_id: content.ebook_template_id || "",
 		ebook_user_content_number: content.ebook_user_content_number || "",
 		ebook_user_content_title: content.ebook_user_content_title || "",
 		ebook_user_content_description:

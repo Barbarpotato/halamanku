@@ -32,11 +32,5 @@ export default async function PreviewPage({ params }) {
 		);
 	}
 
-	// Get the template data if available
-	let template = null;
-	if (content.ebook_template_id) {
-		template = await getEbookTemplateById(content.ebook_template_id);
-	}
-
-	return <Preview content={content} template={template} />;
+	return <Preview content={content} />;
 }
