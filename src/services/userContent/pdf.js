@@ -39,12 +39,6 @@ export const uploadPdf = async (contentId, pdfFile) => {
 
 	if (result.status === "SUCCESS") {
 		const path = result.data.path;
-		await supabase
-			.from("ebook_user_content")
-			.update({
-				storage_file_name: path,
-			})
-			.eq("id", contentId);
 		return path;
 	} else {
 		throw new Error(result.error || "Upload failed");

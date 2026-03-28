@@ -14,7 +14,6 @@ import PageHeader from "@/components/PageHeader";
 import TabActions from "./components/TabActions";
 import BasicInfoTab from "./components/BasicInfoTab";
 import PdfTab from "./components/PdfTab";
-import PreviewTab from "./components/PreviewTab";
 import AccessTab from "./components/AccessTab";
 import Breadcrumb from "@/components/Breadcrumb";
 
@@ -40,7 +39,6 @@ export default function Detail({
 		ebook_user_content_title: content.ebook_user_content_title || "",
 		ebook_user_content_description:
 			content.ebook_user_content_description || "",
-		template_preview_code: content.ebook_template_preview_code || "",
 		is_published: content.is_published || false,
 	});
 
@@ -113,11 +111,6 @@ export default function Detail({
 	const showPublishButton =
 		!!content.storage_file_name && content.is_published === false;
 
-	// Preview tab: only visible if storage_file_name != null AND upload_worker_status == SUCCESS
-	const showPreviewTab =
-		content.storage_file_name != null &&
-		workerStatuses.upload === "SUCCESS";
-
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
@@ -152,7 +145,7 @@ export default function Detail({
 						<h1 className="page-header-title">Detail</h1>
 					</div>
 
-					{/* Header Actions: Delete, Publish, Create Preview */}
+					{/* Header Actions: Delete, Publish */}
 					<TabActions
 						router={router}
 						setError={setError}
@@ -172,11 +165,6 @@ export default function Detail({
 				<form onSubmit={handleSubmit} className="form-card">
 					{error && <div className="error-message">{error}</div>}
 
-					<input
-						type="hidden"
-						name="template_preview_code"
-						value={formData.template_preview_code}
-					/>
 					{/* Tabs Navigation */}
 					<div
 						ref={tabsRef}
@@ -196,16 +184,6 @@ export default function Detail({
 						>
 							PDF
 						</button>
-
-						{showPreviewTab && (
-							<button
-								type="button"
-								className={`tab-button ${activeTab === "preview" ? "active" : ""}`}
-								onClick={() => setActiveTab("preview")}
-							>
-								Preview
-							</button>
-						)}
 
 						{content.is_published == true && (
 							<button
@@ -283,20 +261,6 @@ export default function Detail({
 							modal={modal}
 						/>
 					</div>
-
-					{showPreviewTab && (
-						<div
-							className={`tab-content ${activeTab === "preview" ? "active" : ""}`}
-						>
-							<PreviewTab
-								router={router}
-								setError={setError}
-								formData={formData}
-								content={content}
-								readOnly={readOnly}
-							/>
-						</div>
-					)}
 				</form>
 			</main>
 		</div>

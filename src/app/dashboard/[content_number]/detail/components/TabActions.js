@@ -5,7 +5,7 @@ import { useState } from "react";
 import { getLiveUrl } from "@/services/userContent/utils";
 
 // Services
-import { publishEbookUserContent } from "@/services/userContent/workflow";
+import { publishEbookUserContent } from "@/services/userContent/update";
 import { deleteEbookUserContent } from "@/services/userContent/delete";
 
 export default function TabActions({

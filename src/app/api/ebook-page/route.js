@@ -25,6 +25,18 @@ export async function GET(req) {
 			},
 		);
 
+		if (res.status === 400) {
+			return new Response("Bad Request", { status: 400 });
+		}
+
+		if (res.status === 401) {
+			return new Response("Unauthorized", { status: 401 });
+		}
+
+		if (res.status === 403) {
+			return new Response("Forbidden", { status: 403 });
+		}
+
 		if (!res.ok) {
 			return new Response("Failed to fetch signed URL", { status: 500 });
 		}

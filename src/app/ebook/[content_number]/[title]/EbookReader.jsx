@@ -38,7 +38,7 @@ const generateSkeleton = () => {
 	});
 };
 
-export default function FlipBookReader({ contentNumber, totalPages }) {
+export default function FlipBookReader({ contentNumber, title, totalPages }) {
 	const [pages, setPages] = useState({});
 	const [currentPage, setCurrentPage] = useState(0);
 	const [loading, setLoading] = useState(true);
@@ -92,7 +92,9 @@ export default function FlipBookReader({ contentNumber, totalPages }) {
 			} = await supabase.auth.getUser();
 
 			if (!user) {
-				router.push(`/login`);
+				router.push(
+					`/login?next=${encodeURIComponent(`/ebook/${contentNumber}/${title}`)}`,
+				);
 				return;
 			}
 
@@ -101,14 +103,13 @@ export default function FlipBookReader({ contentNumber, totalPages }) {
 			} = await supabase.auth.getSession();
 
 			if (!session?.access_token) {
-				router.push(`/login`);
+				router.push(
+					`/login?next=${encodeURIComponent(`/ebook/${contentNumber}/${title}`)}`,
+				);
 				return;
 			}
-
 			tokenRef.current = session.access_token;
-
 			await Promise.all([loadPage(0, 0), loadPage(1, 0), loadPage(2, 0)]);
-
 			setLoading(false);
 		};
 

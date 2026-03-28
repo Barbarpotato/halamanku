@@ -989,24 +989,6 @@ a {
 }
 
 /* ============================================
-   PREVIEW
-   ============================================ */
-
-.preview {
-	border: 1px solid var(--color-slate-200);
-	border-radius: var(--radius-md);
-	padding: var(--spacing-2xl);
-	background: white;
-	min-height: 200px;
-	overflow: auto;
-}
-
-.preview img {
-	max-width: 100%;
-	height: auto;
-}
-
-/* ============================================
    RIGHT ACTIONS
    ============================================ */
 
