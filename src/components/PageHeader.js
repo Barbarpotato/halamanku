@@ -161,7 +161,7 @@ export default function PageHeader({ user, ebookUser, showUserInfo = false }) {
 								<span
 									className="user-email block text-xs sm:text-sm text-gray-600"
 									onClick={() =>
-										router.push("/dashbord/settings")
+										router.push("/dashboard/settings")
 									}
 								>
 									Pengaturan

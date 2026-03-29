@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createEbookUserContentAccess } from "@/services/userContentAccess/create";
 import { createClient } from "@/lib/supabase/server";
+import { decrypt } from "@/lib/encryption";
 
 export async function POST(request, { params }) {
 	const { user_number } = await params;
@@ -19,7 +20,15 @@ export async function POST(request, { params }) {
 		return NextResponse.json({ error: "User not found" }, { status: 404 });
 	}
 
-	const secretKey = ebookUser.lynk_id_merchant_key;
+	let secretKey = "";
+	if (ebookUser.lynk_id_merchant_key) {
+		try {
+			secretKey = decrypt(ebookUser.lynk_id_merchant_key);
+		} catch (error) {
+			// If decryption fails, perhaps it's old plain text
+			secretKey = ebookUser.lynk_id_merchant_key;
+		}
+	}
 	if (!secretKey) {
 		return NextResponse.json(
 			{ error: "Server misconfigured" },
