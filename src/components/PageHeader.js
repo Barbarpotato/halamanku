@@ -46,7 +46,7 @@ export default function PageHeader({ user, ebookUser, showUserInfo = false }) {
 									<div className="flex items-center py-1">
 										<img
 											src={user?.user_metadata?.picture}
-											alt="Profile picture"
+											alt="Gambar profil"
 											className="inline-block size-6 rounded-full ring-2 ring-gray-900 outline -outline-offset-1 outline-white/10"
 										/>
 										<div className="flex flex-col ml-1">
@@ -77,7 +77,7 @@ export default function PageHeader({ user, ebookUser, showUserInfo = false }) {
 													)
 												}
 											>
-												Settings
+												Pengaturan
 											</span>
 										</div>
 									</div>
@@ -117,7 +117,7 @@ export default function PageHeader({ user, ebookUser, showUserInfo = false }) {
 														.submit()
 												}
 											>
-												Sign Out
+												Keluar
 											</span>
 										</div>
 									</div>
@@ -135,7 +135,7 @@ export default function PageHeader({ user, ebookUser, showUserInfo = false }) {
 						<div className="flex items-center py-1">
 							<img
 								src={user?.user_metadata?.picture}
-								alt="Profile picture"
+								alt="Gambar profil"
 								className="inline-block size-6 rounded-full ring-2 ring-gray-900 outline -outline-offset-1 outline-white/10"
 							/>
 							<div className="flex flex-col ml-1">
@@ -164,7 +164,7 @@ export default function PageHeader({ user, ebookUser, showUserInfo = false }) {
 										router.push("/dashbord/settings")
 									}
 								>
-									Settings
+									Pengaturan
 								</span>
 							</div>
 						</div>
@@ -199,7 +199,7 @@ export default function PageHeader({ user, ebookUser, showUserInfo = false }) {
 											.submit()
 									}
 								>
-									Sign Out
+									Keluar
 								</span>
 							</div>
 						</div>

@@ -54,7 +54,7 @@ export default function New({ user, ebookUser, templates }) {
 			const data = await createEbookUserContent(formData, ebookUser);
 			router.push(`/dashboard/${data.ebook_user_content_number}/detail`);
 		} catch (err) {
-			setError(err.message || "Something went wrong");
+			setError(err.message || "Terjadi kesalahan");
 		} finally {
 			setLoading(false);
 		}
@@ -69,13 +69,13 @@ export default function New({ user, ebookUser, templates }) {
 					<div>
 						<Breadcrumb
 							items={[
-								{ label: "Dashboard", href: "/dashboard" },
+								{ label: "Dasbor", href: "/dashboard" },
 								{
-									label: "Create",
+									label: "Buat",
 								},
 							]}
 						/>
-						<h1 className="page-header-title">Create</h1>
+						<h1 className="page-header-title">Buat</h1>
 					</div>
 				</div>
 
@@ -83,7 +83,7 @@ export default function New({ user, ebookUser, templates }) {
 					{error && <div className="error-message">{error}</div>}
 
 					<div className="mb-xl">
-						<h2 className="section-title">Basic Information</h2>
+						<h2 className="section-title">Informasi Dasar</h2>
 
 						{/* TITLE */}
 						<div className="field">
@@ -91,7 +91,7 @@ export default function New({ user, ebookUser, templates }) {
 								htmlFor="ebook_user_content_title"
 								className="field-label"
 							>
-								Title *
+								Judul *
 							</label>
 							<input
 								type="text"
@@ -99,7 +99,7 @@ export default function New({ user, ebookUser, templates }) {
 								name="ebook_user_content_title"
 								value={formData.ebook_user_content_title}
 								onChange={handleChange}
-								placeholder="Enter ebook title"
+								placeholder="Masukkan judul ebook"
 								className="field-input"
 							/>
 						</div>
@@ -110,7 +110,7 @@ export default function New({ user, ebookUser, templates }) {
 								htmlFor="ebook_user_content_description"
 								className="field-label"
 							>
-								Description *
+								Deskripsi *
 							</label>
 							<textarea
 								id="ebook_user_content_description"
@@ -118,7 +118,7 @@ export default function New({ user, ebookUser, templates }) {
 								value={formData.ebook_user_content_description}
 								onChange={handleChange}
 								rows={4}
-								placeholder="Enter ebook description"
+								placeholder="Masukkan deskripsi ebook"
 								className="field-input"
 							/>
 						</div>
@@ -126,7 +126,7 @@ export default function New({ user, ebookUser, templates }) {
 
 					<div className="actions-row">
 						<a href="/dashboard" className="btn-secondary">
-							Cancel
+							Batal
 						</a>
 
 						<button
@@ -134,7 +134,7 @@ export default function New({ user, ebookUser, templates }) {
 							disabled={loading}
 							className="btn-primary"
 						>
-							{loading ? "Creating..." : "Create"}
+							{loading ? "Membuat..." : "Buat"}
 						</button>
 					</div>
 				</form>

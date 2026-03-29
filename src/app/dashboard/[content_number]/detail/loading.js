@@ -1,5 +1,5 @@
 import DetailLoading from "@/components/Skeletons/Detail";
 
 export default function Loading() {
-	return <DetailLoading title={"Detail"} />;
+	return <DetailLoading title={"Rincian	"} />;
 }

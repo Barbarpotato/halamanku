@@ -14,9 +14,9 @@ export default function DashboardLoading() {
 
 				<div className="page-header">
 					<div>
-						<h1 className="page-header-title">Dashboard</h1>
+						<h1 className="page-header-title">Dasbor</h1>
 						<p className="page-header-description">
-							Manage your content
+							Kelola konten Anda
 						</p>
 					</div>
 					<div className="animate-pulse bg-slate-200 h-10 w-40 rounded"></div>

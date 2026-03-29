@@ -43,8 +43,8 @@ export default function LoginPage({ next }) {
 							height="90"
 						/>
 					</div>
-					<h1>Welcome to Halamanku</h1>
-					<p>Sign in to manage your ebooks</p>
+					<h1>Selamat datang di Halamanku</h1>
+					<p>Masuk untuk mengelola ebook Anda</p>
 				</div>
 
 				<div className={styles.content}>
@@ -80,7 +80,7 @@ export default function LoginPage({ next }) {
 										fill="#EA4335"
 									/>
 								</svg>
-								Continue with Google
+								Lanjutkan dengan Google
 							</>
 						)}
 					</button>
@@ -88,8 +88,7 @@ export default function LoginPage({ next }) {
 
 				<div className={styles.footer}>
 					<p>
-						By signing in, you agree to our Terms of Service and
-						Privacy Policy
+						Dengan masuk, Anda setuju dengan Syarat Layanan dan Kebijakan Privasi kami
 					</p>
 				</div>
 			</div>

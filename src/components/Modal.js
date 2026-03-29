@@ -12,7 +12,7 @@ const Modal = ({ isOpen, type, message, onConfirm, onCancel, onClose }) => {
 				<div className="modal-actions">
 					{type === "confirm" ? (
 						<>
-							<button onClick={onCancel}>Cancel</button>
+							<button onClick={onCancel}>Batal</button>
 							<button onClick={onConfirm}>OK</button>
 						</>
 					) : (

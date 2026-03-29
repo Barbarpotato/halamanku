@@ -11,9 +11,9 @@ export default function Index({ user, ebookUser, userContents }) {
 			<main className="main">
 				<div className="page-header">
 					<div>
-						<h1 className="page-header-title">Dashboard</h1>
+						<h1 className="page-header-title">Dasbor</h1>
 						<p className="page-header-description">
-							Manage your content
+							Kelola konten Anda
 						</p>
 					</div>
 					<Link href="/dashboard/new" prefetch className="btn-create">
@@ -42,7 +42,7 @@ export default function Index({ user, ebookUser, userContents }) {
 							>
 								<h3 className="text-lg font-semibold mb-2 text-gray-800">
 									{content.ebook_user_content_title ||
-										"Untitled"}
+										"Tanpa judul"}
 								</h3>
 								<p className="text-gray-600 mb-4">
 									{content.ebook_user_content_description
@@ -55,15 +55,15 @@ export default function Index({ user, ebookUser, userContents }) {
 											.length > 150
 											? "..."
 											: "")
-										: "No description"}
+										: "Tidak ada deskripsi"}
 								</p>
 								<div className="flex justify-between items-center">
 									<span
 										className={`badge ${content.is_published ? "badge-published" : "badge-draft"}`}
 									>
 										{content.is_published
-											? "Published"
-											: "Draft"}
+											? "Diterbitkan"
+											: "Draf"}
 									</span>
 									<div className="flex gap-2">
 										<Link
@@ -80,8 +80,8 @@ export default function Index({ user, ebookUser, userContents }) {
 					</div>
 				) : (
 					<div className="empty-state">
-						<h3>No ebooks yet</h3>
-						<p>Create your first ebook to get started</p>
+						<h3>Belum ada ebook</h3>
+						<p>Buat ebook pertama Anda untuk memulai</p>
 					</div>
 				)}
 			</main>

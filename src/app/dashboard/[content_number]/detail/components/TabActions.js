@@ -37,7 +37,7 @@ export default function TabActions({
 
 	const handleDelete = async () => {
 		const result = await modal.confirm({
-			message: "Are you sure you want to delete this ebook?",
+			message: "Apakah Anda yakin ingin menghapus ebook ini?",
 		});
 		if (!result) return;
 
@@ -56,7 +56,7 @@ export default function TabActions({
 
 	const handlePublish = async () => {
 		const result = await modal.confirm({
-			message: "Are you sure you want to publish this ebook?",
+			message: "Apakah Anda yakin ingin mempublikasikan ebook ini?",
 		});
 		if (!result) return;
 
@@ -68,7 +68,7 @@ export default function TabActions({
 			modal.show({
 				type: "info",
 				message:
-					"Ebook is being published. Please Wait for a while to see your page",
+					"Ebook sedang dipublikasikan. Harap tunggu sebentar untuk melihat halaman Anda",
 			});
 			router.refresh();
 			setLoading(false);
@@ -107,15 +107,15 @@ export default function TabActions({
 					</svg>
 					<span className="flex flex-col sm:flex-row items-start sm:items-center">
 						<span className="hidden sm:inline">
-							Your Content is Live.{" "}
+							Konten telah terpublikasi.
 						</span>
 						<a
 							href={liveUrl}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="live-link text-blue-600 hover:text-blue-800 underline"
+							className="ml-1 live-link text-blue-600 hover:text-blue-800 underline"
 						>
-							Click here to view
+							Klik untuk melihat
 						</a>
 					</span>
 				</div>
@@ -171,8 +171,8 @@ export default function TabActions({
 											/>
 										</svg>
 										{formData.is_published
-											? "Published"
-											: "Publish"}
+											? "Diterbitkan"
+											: "Publikasikan"}
 									</button>
 								)}
 
@@ -202,7 +202,7 @@ export default function TabActions({
 												strokeLinejoin="round"
 											/>
 										</svg>
-										Delete
+										Hapus
 									</button>
 								)}
 							</div>

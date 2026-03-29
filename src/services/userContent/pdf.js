@@ -75,7 +75,7 @@ export const getPdfUrl = async (pdfPath) => {
 };
 
 
-export const deletePdf = async (storage_file_name) => {
+export const deletePdf = async (contentId, storage_file_name) => {
 
 	if (!storage_file_name) {
 		throw new Error("No file to delete");
@@ -83,6 +83,17 @@ export const deletePdf = async (storage_file_name) => {
 
 	const formData = new FormData();
 	formData.append("path", storage_file_name);
+
+	// validate the content data
+	const { data: contentData, error: contentError } = await supabase
+		.from("ebook_user_content")
+		.select()
+		.eq("id", contentId)
+		.single();
+
+	if (contentError) {
+		throw contentError;
+	}
 
 	const response = await fetch(STORAGE_URL, {
 		method: "DELETE",
@@ -96,6 +107,20 @@ export const deletePdf = async (storage_file_name) => {
 
 	if (result.status !== "SUCCESS") {
 		console.error("Failed to delete file from storage:", result.error);
+	}
+
+	// updating directly in database
+	const { error: updateError } = await supabase
+		.from("ebook_user_content")
+		.update({
+			storage_file_total_page: null,
+			upload_worker_status: "IDLE",
+			storage_file_name: null
+		})
+		.eq("id", contentId);
+
+	if (updateError) {
+		throw updateError;
 	}
 
 	return true;

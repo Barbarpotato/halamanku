@@ -84,14 +84,14 @@ export default function Detail({
 					<div>
 						<Breadcrumb
 							items={[
-								{ label: "Dashboard", href: "/dashboard" },
+								{ label: "Dasbor", href: "/dashboard" },
 								{
-									label: "Detail",
+									label: "Rincian",
 								},
 							]}
 						/>
 
-						<h1 className="page-header-title">Detail</h1>
+						<h1 className="page-header-title">Rincian</h1>
 					</div>
 
 					{/* Header Actions: Delete, Publish */}
@@ -124,7 +124,7 @@ export default function Detail({
 							className={`tab-button ${activeTab === "basic" ? "active" : ""}`}
 							onClick={() => setActiveTab("basic")}
 						>
-							General
+							Umum
 						</button>
 
 						{content.is_published == true && (
@@ -133,7 +133,7 @@ export default function Detail({
 								className={`tab-button ${activeTab === "access" ? "active" : ""}`}
 								onClick={() => setActiveTab("access")}
 							>
-								Access
+								Akses
 							</button>
 						)}
 
@@ -166,7 +166,6 @@ export default function Detail({
 							content={content}
 							formData={formData}
 							setFormData={setFormData}
-							templates={templates}
 							readOnly={readOnly}
 							setError={setError}
 							modal={modal}

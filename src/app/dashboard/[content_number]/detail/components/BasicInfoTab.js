@@ -8,7 +8,6 @@ export default function BasicInfoTab({
 	content,
 	formData,
 	setFormData,
-	templates,
 	readOnly = false,
 	setError,
 	modal,
@@ -24,7 +23,6 @@ export default function BasicInfoTab({
 		}));
 	};
 
-	// PDF functionality from PdfTab
 	const isPublished = content?.is_published === true;
 
 	const fileInputRef = useRef(null);
@@ -32,7 +30,6 @@ export default function BasicInfoTab({
 	// PDF file state
 	const [pdfFile, setPdfFile] = useState(null);
 	const [pdfPath, setPdfPath] = useState(content.storage_file_name || "");
-	const [readOnlyPdfLoading, setReadOnlyPdfLoading] = useState(false);
 	const [previewUrl, setPreviewUrl] = useState(null);
 
 	const [pdfLoading, setPdfLoading] = useState(false);
@@ -58,22 +55,12 @@ export default function BasicInfoTab({
 		loadPreviewUrl();
 	}, [pdfPath]);
 
-	const STORAGE_URL =
-		"https://stzieqkgyktsrtauytmu.supabase.co/functions/v1/ebook-storage-service";
-
-	const getAnonKey = () => {
-		if (typeof window !== "undefined") {
-			return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-		}
-		return null;
-	};
-
 	// Handle file selection
 	const handleFileChange = (e) => {
 		const file = e.target.files[0];
 		if (file) {
 			if (file.type !== "application/pdf") {
-				setError("Only PDF files are allowed");
+				setError("Hanya file PDF yang diperbolehkan");
 				return;
 			}
 			setPdfFile(file);
@@ -84,7 +71,7 @@ export default function BasicInfoTab({
 	// Upload new PDF
 	const handleUploadPdf = async () => {
 		if (!pdfFile) {
-			setError("Please select a file first");
+			setError("Silakan pilih file terlebih dahulu");
 			return;
 		}
 
@@ -105,52 +92,6 @@ export default function BasicInfoTab({
 		}
 	};
 
-	// Get signed URL
-	const handleGetPdfUrl = async () => {
-		if (!pdfPath) {
-			setError("No file to view");
-			return;
-		}
-
-		setPdfLoading(true);
-		setError(null);
-
-		try {
-			const signedUrl = await getPdfUrl(pdfPath);
-			window.open(signedUrl, "_blank");
-		} catch (err) {
-			setError(err.message);
-		} finally {
-			setPdfLoading(false);
-		}
-	};
-
-	const handleReadOnlyGetPdfUrl = async () => {
-		if (!pdfPath) return;
-
-		setReadOnlyPdfLoading(true);
-
-		try {
-			const url = `${STORAGE_URL}?path=${encodeURIComponent(pdfPath)}`;
-			const response = await fetch(url, {
-				method: "GET",
-				headers: {
-					Authorization: `Bearer ${getAnonKey()}`,
-				},
-			});
-
-			const result = await response.json();
-
-			if (result.status === "SUCCESS") {
-				window.open(result.data.signedUrl, "_blank");
-			}
-		} catch (err) {
-			console.error("Failed to get PDF URL:", err);
-		} finally {
-			setReadOnlyPdfLoading(false);
-		}
-	};
-
 	const triggerFileInput = () => {
 		if (fileInputRef.current) {
 			fileInputRef.current.click();
@@ -160,12 +101,12 @@ export default function BasicInfoTab({
 	// Delete PDF
 	const handleDeletePdf = async () => {
 		if (!pdfPath) {
-			setError("No file to delete");
+			setError("Tidak ada file untuk dihapus");
 			return;
 		}
 
 		const confirmed = await modal.confirm({
-			message: "Are you sure you want to delete the PDF file?",
+			message: "Apakah Anda yakin ingin menghapus file PDF?",
 		});
 		if (!confirmed) {
 			return;
@@ -175,7 +116,7 @@ export default function BasicInfoTab({
 		setError(null);
 
 		try {
-			await deletePdf(pdfPath);
+			await deletePdf(content.id, pdfPath);
 			await updateEbookUserContent(content.id, { storage_file_name: null });
 			setPdfPath("");
 			setPreviewUrl(null);
@@ -188,7 +129,7 @@ export default function BasicInfoTab({
 
 	return (
 		<div className="mb-xl">
-			<h2 className="section-title my-2">General Information</h2>
+			<h2 className="section-title my-2">Informasi Umum</h2>
 			<div className="flex flex-col lg:flex-row gap-8">
 				{/* PDF Section */}
 				<div className="flex-1">
@@ -210,7 +151,7 @@ export default function BasicInfoTab({
 										></iframe>
 									) : (
 										<div className="flex items-center justify-center h-full text-gray-500">
-											Failed to load preview
+											Gagal memuat pratinjau
 										</div>
 									)}
 								</div>
@@ -223,21 +164,21 @@ export default function BasicInfoTab({
 										disabled={pdfLoading}
 										className="btn-danger"
 									>
-										{pdfLoading ? "Loading..." : "Delete PDF"}
+										{pdfLoading ? "Memuat..." : "Hapus PDF"}
 									</button>
 								</div>
 							)}
 						</div>
 					) : readOnly ? (
 						<div className="field">
-							<div className="field-value">No PDF uploaded</div>
+							<div className="field-value">Tidak ada PDF yang diunggah</div>
 						</div>
 					) : (
 						<>
 							{/* Show file input only if no file is uploaded yet */}
 							{!pdfPath && !pdfFile && (
 								<div className="field">
-									<label className="field-label">Upload PDF File</label>
+									<label className="field-label">Unggah File PDF</label>
 									<div
 										onClick={triggerFileInput}
 										className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
@@ -258,10 +199,10 @@ export default function BasicInfoTab({
 										</svg>
 										<div className="mt-4">
 											<p className="text-sm text-gray-500">
-												Click to upload a PDF file
+												Klik untuk mengunggah file PDF
 											</p>
 											<p className="text-xs text-gray-400">
-												PDF files only
+												Hanya file PDF
 											</p>
 										</div>
 									</div>
@@ -279,7 +220,7 @@ export default function BasicInfoTab({
 							{/* Show selected file details if file is selected but not uploaded */}
 							{pdfFile && !pdfPath && (
 								<div className="field">
-									<label className="field-label">Selected PDF File</label>
+									<label className="field-label">File PDF yang Dipilih</label>
 									<div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
 										<div className="flex items-center justify-between">
 											<div className="flex items-center">
@@ -338,7 +279,7 @@ export default function BasicInfoTab({
 										disabled={pdfLoading || !pdfFile}
 										className="btn-primary"
 									>
-										{pdfLoading ? "Uploading..." : "Upload PDF"}
+										{pdfLoading ? "Mengunggah..." : "Unggah PDF"}
 									</button>
 								</div>
 							)}
@@ -349,10 +290,10 @@ export default function BasicInfoTab({
 				{/* Basic Information Section */}
 				<div className="flex-1 ">
 					<div className="field">
-						<label className="field-label">Title</label>
+						<label className="field-label">Judul</label>
 						{readOnly ? (
 							<div className="field-value">
-								{content.ebook_user_content_title || "Untitled"}
+								{content.ebook_user_content_title || "Tanpa judul"}
 							</div>
 						) : (
 							<input
@@ -361,17 +302,17 @@ export default function BasicInfoTab({
 								name="ebook_user_content_title"
 								value={formData.ebook_user_content_title}
 								onChange={handleChange}
-								placeholder="Enter ebook title"
+								placeholder="Masukkan judul ebook"
 								className="field-input"
 							/>
 						)}
 					</div>
 					<div className="field">
-						<label className="field-label">Description</label>
+						<label className="field-label">Deskripsi</label>
 						{readOnly ? (
 							<div className="field-value">
 								{content.ebook_user_content_description ||
-									"No description provided."}
+									"Tidak ada deskripsi yang diberikan."}
 							</div>
 						) : (
 							<textarea
@@ -381,7 +322,7 @@ export default function BasicInfoTab({
 								onChange={handleChange}
 								rows={4}
 								style={{ resize: "none" }}
-								placeholder="Enter ebook description"
+								placeholder="Masukkan deskripsi ebook"
 								className="field-input"
 							/>
 						)}
@@ -394,7 +335,7 @@ export default function BasicInfoTab({
 								disabled={loading}
 								className="btn-primary"
 							>
-								{loading ? "Loading..." : "Save Changes"}
+								{loading ? "Memuat..." : "Simpan Perubahan"}
 							</button>
 						)}
 					</div>

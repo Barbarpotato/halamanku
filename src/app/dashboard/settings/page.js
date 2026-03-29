@@ -30,28 +30,28 @@ export default async function SettingsPage() {
 				<div>
 					<Breadcrumb
 						items={[
-							{ label: "Dashboard", href: "/dashboard" },
+							{ label: "Dasbor", href: "/dashboard" },
 							{
-								label: "Settings",
+								label: "Pengaturan",
 							},
 						]}
 					/>
 				</div>
 
 				<div className="page-header">
-					<h1 className="page-header-title">Settings</h1>
+					<h1 className="page-header-title">Pengaturan</h1>
 					<p className="page-header-description">
-						Manage your settings
+						Kelola pengaturan Anda
 					</p>
 				</div>
 
 				<div className="bg-white p-6 rounded-lg shadow-md border">
 					<h3 className="text-lg font-semibold mb-4 text-gray-800">
-						Webhook URL
+						URL Webhook
 					</h3>
 
 					<p className="text-sm text-gray-600 mb-3">
-						Use this URL to receive order information from Lynk.id:
+						Gunakan URL ini untuk menerima informasi pesanan dari Lynk.id:
 					</p>
 
 					<CopyWebhook url={webhookUrl} />

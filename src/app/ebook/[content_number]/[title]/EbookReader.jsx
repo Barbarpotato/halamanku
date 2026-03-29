@@ -221,7 +221,7 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 			{loading && (
 				<div className={styles.globalLoader}>
 					<div className={styles.spinner}></div>
-					<p className={styles.loadingText}>Preparing your book...</p>
+					<p className={styles.loadingText}>Mempersiapkan buku Anda...</p>
 				</div>
 			)}
 

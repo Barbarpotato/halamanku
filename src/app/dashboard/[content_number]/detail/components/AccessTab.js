@@ -15,6 +15,9 @@ export default function AccessTab({ content, readOnly = false }) {
 	const [newEmail, setNewEmail] = useState("");
 	const [successMessage, setSuccessMessage] = useState("");
 	const [errorMessage, setErrorMessage] = useState("");
+	const [showAddModal, setShowAddModal] = useState(false);
+	const [showSearchModal, setShowSearchModal] = useState(false);
+	const [emailError, setEmailError] = useState("");
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: [
@@ -44,12 +47,13 @@ export default function AccessTab({ content, readOnly = false }) {
 				queryKey: ["accessList", content.ebook_user_content_number],
 			});
 			setNewEmail("");
-			setSuccessMessage("Access granted successfully!");
+			setEmailError("");
+			setSuccessMessage("Akses diberikan dengan sukses!");
 			setErrorMessage("");
 			setTimeout(() => setSuccessMessage(""), 5000);
 		},
 		onError: (error) => {
-			setErrorMessage(`Failed to grant access: ${error.message}`);
+			setErrorMessage(`Gagal memberikan akses: ${error.message}`);
 			setSuccessMessage("");
 			setTimeout(() => setErrorMessage(""), 5000);
 		},
@@ -61,26 +65,26 @@ export default function AccessTab({ content, readOnly = false }) {
 			queryClient.invalidateQueries({
 				queryKey: ["accessList", content.ebook_user_content_number],
 			});
-			setSuccessMessage("Access removed successfully!");
+			setSuccessMessage("Akses dihapus dengan sukses!");
 			setErrorMessage("");
 			setTimeout(() => setSuccessMessage(""), 5000);
 		},
 		onError: (error) => {
-			setErrorMessage(`Failed to remove access: ${error.message}`);
+			setErrorMessage(`Gagal menghapus akses: ${error.message}`);
 			setSuccessMessage("");
 			setTimeout(() => setErrorMessage(""), 5000);
 		},
 	});
 
 	const handleAddEmail = () => {
-		if (newEmail.trim()) {
+		if (newEmail.trim() && !emailError) {
 			createMutation.mutate(newEmail.trim());
 		}
 	};
 
 	const handleDelete = async (id) => {
 		const result = await modal.confirm({
-			message: "Are you sure you want to remove this access?",
+			message: "Apakah Anda yakin ingin menghapus akses ini?",
 		});
 		if (result) {
 			deleteMutation.mutate(id);
@@ -92,6 +96,24 @@ export default function AccessTab({ content, readOnly = false }) {
 		setPage(1);
 	};
 
+	const validateEmail = (email) => {
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		return emailRegex.test(email);
+	};
+
+	const handleEmailChange = (e) => {
+		const value = e.target.value;
+		setNewEmail(value);
+
+		if (value.trim() === "") {
+			setEmailError("");
+		} else if (!validateEmail(value)) {
+			setEmailError("Format email tidak valid");
+		} else {
+			setEmailError("");
+		}
+	};
+
 	// Calculate totalPages safely
 	const totalPages = data
 		? Math.max(1, Math.ceil(data.total / data.limit))
@@ -100,12 +122,28 @@ export default function AccessTab({ content, readOnly = false }) {
 	return (
 		<div className="access-management">
 			<div className="section-header">
-				<h2 className="section-title">Access Management</h2>
-				<p className="section-description">
-					Manage email addresses that have access to this content
-				</p>
+				<div className="flex items-center justify-between">
+					<div>
+						<h2 className="section-title">Manajemen Akses</h2>
+						<p className="section-description">
+							Kelola alamat email yang memiliki akses ke konten ini
+						</p>
+					</div>
+					<button
+						type="button"
+						onClick={(e) => {
+							e.preventDefault();
+							setShowAddModal(true);
+						}}
+						className="btn-primary flex items-center gap-2"
+					>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+							<path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
+						</svg>
+					</button>
+				</div>
 			</div>
-			<hr className="section-divider"></hr>
+			<hr className="section-divider my-2"></hr>
 
 			{successMessage && (
 				<div className="success-message">
@@ -119,67 +157,53 @@ export default function AccessTab({ content, readOnly = false }) {
 				</div>
 			)}
 
-			<div className="add-access-card mt-4">
-				<h3>Add New Access</h3>
-				<div className="add-access-form">
-					<div className="form-row">
-						<input
-							type="email"
-							placeholder="Enter email address (e.g., user@example.com)"
-							value={newEmail}
-							onChange={(e) => setNewEmail(e.target.value)}
-							className="field-input"
-						/>
-						<button
-							type="button"
-							onClick={handleAddEmail}
-							disabled={createMutation.isPending}
-							className="btn-primary"
-						>
-							{createMutation.isPending
-								? "Adding..."
-								: "Grant Access"}
-						</button>
-					</div>
-				</div>
-			</div>
 
 			<div className="filters-section">
-				<h2 className="section-title">User Access List</h2>
-
-				<div className="search-box">
-					<input
-						type="text"
-						placeholder="Search User by email address..."
-						value={emailFilter}
-						onChange={handleFilterChange}
-						className="field-input"
-					/>
-					<span className="search-icon">🔍</span>
+				<div className="flex items-center justify-between">
+					<h2 className="section-title">Daftar Akses Pengguna</h2>
+					<button
+						type="button"
+						onClick={(e) => {
+							e.preventDefault();
+							setShowSearchModal(true);
+						}}
+						className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
+						title="Cari pengguna"
+					>
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+							<circle cx="11" cy="11" r="8" />
+							<path d="M21 21l-4.35-4.35" />
+						</svg>
+					</button>
 				</div>
+				{emailFilter && (
+					<p className="text-sm text-gray-600 mt-1">
+						Anda sedang mencari: <span className="font-medium">{emailFilter}</span>
+					</p>
+				)}
 			</div>
 
 			{isLoading && (
 				<div className="loading-state">
 					<div className="spinner"></div>
-					<p>Loading access list...</p>
+					<p>Memuat daftar akses...</p>
 				</div>
 			)}
 
 			{error && (
 				<div className="error-card">
-					<p>❌ Error loading access list: {error.message}</p>
+					<p>❌ Kesalahan memuat daftar akses: {error.message}</p>
 				</div>
 			)}
 
 			{data && data.data.length === 0 && !isLoading && (
 				<div className="empty-state">
 					<div className="empty-icon">📧</div>
-					<h3>No Access Records</h3>
+					<h3>Tidak Ada Rekaman Akses</h3>
 					<p>
 						{emailFilter
-							? "No emails match your search criteria."
-							: "No one has been granted access to this content yet."}
+							? "Tidak ada email yang cocok dengan kriteria pencarian Anda."
+							: "Belum ada yang diberikan akses ke konten ini."}
 					</p>
 				</div>
 			)}
@@ -195,12 +219,12 @@ export default function AccessTab({ content, readOnly = false }) {
 									</div>
 									{access.lynk_id_reference_id && (
 										<div className="created-date">
-											Lynk ID:{" "}
+											ID Lynk:{" "}
 											{access.lynk_id_reference_id}
 										</div>
 									)}
 									<div className="created-date">
-										Granted on{" "}
+										Diberikan pada{" "}
 										{new Date(
 											access.created,
 										).toLocaleDateString("en-US", {
@@ -212,12 +236,15 @@ export default function AccessTab({ content, readOnly = false }) {
 								</div>
 								<div className="access-actions">
 									<button
-										onClick={() => handleDelete(access.id)}
+										onClick={(e) => {
+											e.preventDefault();
+											handleDelete(access.id)
+										}}
 										disabled={deleteMutation.isPending}
 										className="btn-danger-outline btn-sm"
-										title="Remove access"
+										title="Hapus akses"
 									>
-										Remove
+										Hapus
 									</button>
 								</div>
 							</div>
@@ -226,26 +253,164 @@ export default function AccessTab({ content, readOnly = false }) {
 
 					<div className="pagination-controls">
 						<button
-							onClick={() => setPage((p) => Math.max(1, p - 1))}
+							onClick={(e) => {
+								e.preventDefault();
+								setPage((p) => Math.max(1, p - 1));
+							}}
 							disabled={page === 1}
-							className="btn-secondary pagination-btn"
+							className="btn-secondary pagination-btn text-xs sm:text-sm md:text-base"
 						>
-							← Previous
+							←
 						</button>
-						<span className="pagination-info">
-							Page {page} of {totalPages}
+						<span className="pagination-info text-xs sm:text-sm md:text-base">
+							Hal {page} dari {totalPages}
 						</span>
 						<button
-							onClick={() =>
-								setPage((p) => Math.min(totalPages, p + 1))
-							}
+							onClick={(e) => {
+								e.preventDefault();
+								setPage((p) => Math.min(totalPages, p + 1));
+							}}
 							disabled={page >= totalPages}
-							className="btn-secondary pagination-btn"
+							className="btn-secondary pagination-btn text-xs sm:text-sm md:text-base"
 						>
-							Next →
+							→
 						</button>
 					</div>
 				</>
+			)}
+
+			{/* Add Access Modal */}
+			{showAddModal && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+						<div className="flex justify-between items-center mb-4">
+							<h3 className="text-lg font-semibold text-gray-900">Tambah Akses Baru</h3>
+							<button
+								type="button"
+								onClick={(e) => {
+									e.preventDefault();
+									setShowAddModal(false);
+									setNewEmail("");
+									setEmailError("");
+								}}
+								className="text-gray-500 hover:text-gray-700 text-xl"
+							>
+								✕
+							</button>
+						</div>
+						<div className="space-y-4">
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-2">
+									Alamat Email
+								</label>
+								<input
+									type="email"
+									placeholder="Masukkan alamat email"
+									value={newEmail}
+									onChange={handleEmailChange}
+									className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+								/>
+								{emailError && (
+									<p className="text-red-600 text-sm mt-1">{emailError}</p>
+								)}
+							</div>
+							<div className="flex justify-end gap-2">
+								<button
+									type="button"
+									onClick={(e) => {
+										e.preventDefault();
+										setShowAddModal(false);
+									}}
+									className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+								>
+									Batal
+								</button>
+								<button
+									type="button"
+									onClick={(e) => {
+										e.preventDefault();
+										handleAddEmail();
+										setShowAddModal(false);
+									}}
+									disabled={createMutation.isPending || !newEmail.trim() || emailError}
+									className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+								>
+									{createMutation.isPending ? "Menambahkan..." : "Berikan Akses"}
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Search Modal */}
+			{showSearchModal && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+						<div className="flex justify-between items-center mb-4">
+							<h3 className="text-lg font-semibold text-gray-900">Cari Pengguna</h3>
+							<button
+								type="button"
+								onClick={(e) => {
+									e.preventDefault();
+									setShowSearchModal(false);
+								}}
+								className="text-gray-500 hover:text-gray-700 text-xl"
+							>
+								✕
+							</button>
+						</div>
+						<div className="space-y-4">
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-2">
+									Alamat Email
+								</label>
+								<div className="relative">
+									<input
+										type="text"
+										placeholder="Cari Alamat Email"
+										value={emailFilter}
+										onChange={handleFilterChange}
+										className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+									/>
+									<svg
+										className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+									>
+										<circle cx="11" cy="11" r="8" />
+										<path d="M21 21l-4.35-4.35" />
+									</svg>
+								</div>
+							</div>
+							<div className="flex justify-end gap-2">
+								<button
+									type="button"
+									onClick={(e) => {
+										e.preventDefault();
+										setEmailFilter("");
+										setPage(1);
+									}}
+									className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+								>
+									Reset
+								</button>
+								<button
+									type="button"
+									onClick={(e) => {
+										e.preventDefault();
+										setShowSearchModal(false);
+									}}
+									className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+								>
+									Lanjut
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
 			)}
 		</div>
 	);
