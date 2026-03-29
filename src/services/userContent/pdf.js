@@ -1,7 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-
-const STORAGE_URL =
-	"https://stzieqkgyktsrtauytmu.supabase.co/functions/v1/ebook-storage-service";
+import { STORAGE_URL } from "@/lib/supabase";
 
 const supabase = createClient();
 

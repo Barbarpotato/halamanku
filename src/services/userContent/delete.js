@@ -1,7 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-
-const STORAGE_URL =
-	"https://stzieqkgyktsrtauytmu.supabase.co/functions/v1/ebook-storage-service";
+import { STORAGE_URL } from "@/lib/supabase";
 
 const supabase = createClient();
 
@@ -11,6 +9,25 @@ const getAnonKey = () => {
 };
 
 export const deleteEbookUserContent = async (content) => {
+
+	// check the content is exist or not
+	const { data: contentData, error: contentError } = await supabase
+		.from("ebook_user_content")
+		.select()
+		.eq("id", content.id)
+		.single();
+
+	if (contentError) {
+		throw contentError;
+	}
+
+	// cannot delete if the upload worker is on the processing
+	if (contentData.upload_worker_status == "PROCESSING") {
+		throw new Error(
+			"Konten Anda sedang diproses.Silakan coba lagi dalam beberapa menit."
+		);
+	}
+
 	if (content.storage_file_name) {
 		const formData = new FormData();
 		formData.append("path", content.storage_file_name);

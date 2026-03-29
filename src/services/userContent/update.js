@@ -1,9 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
+import { STORAGE_URL } from "@/lib/supabase";
 
 const supabase = createClient();
-
-const STORAGE_URL =
-	"https://stzieqkgyktsrtauytmu.supabase.co/functions/v1/ebook-storage-service";
 
 // Helper to get anon key
 const getAnonKey = () => {
@@ -90,7 +88,7 @@ export const publishEbookUserContent = async (formData) => {
 
 		if (result.status === "SUCCESS") {
 			throw new Error(
-				"Please wait to publish the ebook, We are preparing the ebook for you. Please try again after several minutes",
+				"Konten Anda sedang diproses. Silakan coba lagi dalam beberapa menit."
 			);
 		} else {
 			throw new Error(result.error || "Upload failed");
@@ -99,7 +97,7 @@ export const publishEbookUserContent = async (formData) => {
 
 	if (isUploadWorkerDone.upload_worker_status !== "SUCCESS") {
 		throw new Error(
-			"Please wait to publish the ebook, We are preparing the ebook for you. Please try again after several minutes",
+			"Konten Anda sedang diproses. Silakan coba lagi dalam beberapa menit."
 		);
 	}
 

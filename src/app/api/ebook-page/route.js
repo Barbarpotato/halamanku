@@ -1,7 +1,4 @@
-import { NextRequest } from "next/server";
-
-const SERVICE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const FUNCTION_URL = `${SERVICE_URL}/functions/v1/ebook-shard-service`;
+import { SHARD_URL } from "@/lib/supabase";
 
 export async function GET(req) {
 	try {
@@ -17,7 +14,7 @@ export async function GET(req) {
 		}
 
 		const res = await fetch(
-			`${FUNCTION_URL}?content_number=${contentNumber}&page=${page}`,
+			`${SHARD_URL}?content_number=${contentNumber}&page=${page}`,
 			{
 				headers: {
 					Authorization: authHeader,
