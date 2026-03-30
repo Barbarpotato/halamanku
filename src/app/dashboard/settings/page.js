@@ -8,6 +8,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import PageHeader from "@/components/PageHeader";
 import CopyWebhook from "./components/CopyWebhook";
 import MerchantKeyInput from "./components/MerchantKeyInput";
+import DetailLoading from "@/components/Skeletons/Detail";
 
 export default function SettingsPage() {
 	const [user, setUser] = useState(null);
@@ -76,17 +77,7 @@ export default function SettingsPage() {
 	};
 
 	if (loading) {
-		return (
-			<div className="page-container">
-				<main className="main">
-					<div className="page-header">
-						<h1 className="page-header-title">Pengaturan</h1>
-						<p className="page-header-description text-sm md:text-base">Kelola pengaturan Anda</p>
-					</div>
-					<div>Loading...</div>
-				</main>
-			</div>
-		);
+		return <DetailLoading title={"Pengaturan"} />;
 	}
 
 	const webhookUrl = `https://halamanku.vercel.app/webhook/lynk/${ebookUser?.user_number}`;
@@ -116,16 +107,18 @@ export default function SettingsPage() {
 
 				{/* Tabs Navigation */}
 				<div className="tabs-container">
-					<button className="tab-button active">
-						Integrasi
-					</button>
+					<button className="tab-button active">Integrasi</button>
 				</div>
 
 				{/* Tab Content */}
 				<div className="tab-content active">
 					<div className="bg-white p-6 rounded-lg shadow-md border">
 						<h3 className="text-lg font-semibold text-gray-800 flex items-center">
-							<img src="/lynk-logo.png" alt="LYNK Logo" className="h-24 w-auto" />
+							<img
+								src="/lynk-logo.png"
+								alt="LYNK Logo"
+								className="h-24 w-auto"
+							/>
 						</h3>
 
 						<div className="space-y-6">
@@ -141,7 +134,8 @@ export default function SettingsPage() {
 									</h4>
 
 									<p className="text-sm text-gray-600 mb-3">
-										Gunakan URL ini untuk menerima informasi pesanan dari LYNK:
+										Gunakan URL ini untuk menerima informasi
+										pesanan dari LYNK:
 									</p>
 
 									<CopyWebhook url={webhookUrl} />
