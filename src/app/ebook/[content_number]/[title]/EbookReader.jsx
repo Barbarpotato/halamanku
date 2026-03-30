@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import styles from "./ebook.module.css";
 import Link from "next/link";
+import ErrorPage from "@/components/ErrorPage";
 
 const PAGE_BUFFER = 25;
 const JUMP_PRELOAD_RANGE = 2;
@@ -43,6 +44,7 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 	const [currentPage, setCurrentPage] = useState(0);
 	const [loading, setLoading] = useState(true);
 	const [inputPage, setInputPage] = useState(1);
+	const [accessDenied, setAccessDenied] = useState(false);
 
 	const tokenRef = useRef(null);
 	const loadingSet = useRef(new Set());
@@ -139,6 +141,11 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 				},
 			);
 
+			if (res.status === 401) {
+				setAccessDenied(true);
+				return;
+			}
+
 			if (!res.ok) return;
 
 			const blob = await res.blob();
@@ -215,109 +222,142 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 	const goNext = () => bookRef.current?.pageFlip().flipNext();
 	const goPrev = () => bookRef.current?.pageFlip().flipPrev();
 
+	if (accessDenied) {
+		const accessDeniedIcon = (
+			<svg
+				className="mx-auto h-24 w-24 text-red-400"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				aria-hidden="true"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth={1}
+					d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+				/>
+			</svg>
+		);
+
+		return (
+			<ErrorPage
+				icon={accessDeniedIcon}
+				title="Akses Ditolak"
+				message="Anda tidak memiliki akses untuk konten ini."
+				background="bg-gradient-to-br from-red-50 to-pink-100"
+				buttonColor="bg-red-600 hover:bg-red-700 focus:ring-red-500"
+			/>
+		);
+	}
+
 	return (
 		<div className={styles.container}>
-			{/* 🔥 GLOBAL LOADING OVERLAY */}
-			{loading && (
-				<div className={styles.globalLoader}>
-					<div className={styles.spinner}></div>
-					<p className={styles.loadingText}>Mempersiapkan buku Anda...</p>
-				</div>
-			)}
-
-			{/* BRAND */}
-			<Link href="/">
-				<div className={styles.brand}>
-					<div className={styles.logoPlaceholder}>
-						<img src="/halamanku.png" alt="Halamanku" />
+			<>
+				{/* 🔥 GLOBAL LOADING OVERLAY */}
+				{loading && (
+					<div className={styles.globalLoader}>
+						<div className={styles.spinner}></div>
+						<p className={styles.loadingText}>
+							Mempersiapkan buku Anda...
+						</p>
 					</div>
-					<span>
-						Dibuat dengan <b>Halamanku</b>
-					</span>
-				</div>
-			</Link>
+				)}
 
-			<div className={styles.bookWrapper}>
-				<HTMLFlipBook
-					ref={bookRef}
-					width={size.width}
-					height={size.height}
-					flippingTime={900}
-					drawShadow={true}
-					useMouseEvents={true}
-					className={styles.flipBook}
-					onFlip={onFlip}
-					showCover={true}
-					mobileScrollSupport={true}
-				>
-					{Array.from({ length: totalPages }).map((_, i) => (
-						<div key={i} className={styles.page}>
-							{pages[i] ? (
-								<img
-									src={cacheRef.current[i]}
-									className={styles.canvas}
-									draggable={false}
-								/>
-							) : (
-								<div className="w-full h-full bg-[#fdfcf7] p-8 animate-pulse flex flex-col">
-									{generateSkeleton()}
-								</div>
-							)}
+				{/* BRAND */}
+				<Link href="/">
+					<div className={styles.brand}>
+						<div className={styles.logoPlaceholder}>
+							<img src="/halamanku.png" alt="Halamanku" />
 						</div>
-					))}
-				</HTMLFlipBook>
+						<span>
+							Dibuat dengan <b>Halamanku</b>
+						</span>
+					</div>
+				</Link>
 
-				<button
-					onClick={goPrev}
-					className={`${styles.navButton} ${styles.left}`}
-				>
-					‹
-				</button>
+				<div className={styles.bookWrapper}>
+					<HTMLFlipBook
+						ref={bookRef}
+						width={size.width}
+						height={size.height}
+						flippingTime={900}
+						drawShadow={true}
+						useMouseEvents={true}
+						className={styles.flipBook}
+						onFlip={onFlip}
+						showCover={true}
+						mobileScrollSupport={true}
+					>
+						{Array.from({ length: totalPages }).map((_, i) => (
+							<div key={i} className={styles.page}>
+								{pages[i] ? (
+									<img
+										src={cacheRef.current[i]}
+										className={styles.canvas}
+										draggable={false}
+									/>
+								) : (
+									<div className="w-full h-full bg-[#fdfcf7] p-8 animate-pulse flex flex-col">
+										{generateSkeleton()}
+									</div>
+								)}
+							</div>
+						))}
+					</HTMLFlipBook>
 
-				<button
-					onClick={goNext}
-					className={`${styles.navButton} ${styles.right}`}
-				>
-					›
-				</button>
-			</div>
+					<button
+						onClick={goPrev}
+						className={`${styles.navButton} ${styles.left}`}
+					>
+						‹
+					</button>
 
-			<div className={styles.footer}>
-				<div className={styles.controls}>
-					<input
-						type="range"
-						min={0}
-						max={totalPages - 1}
-						value={currentPage}
-						onChange={(e) =>
-							handleSliderChange(Number(e.target.value))
-						}
-						className={styles.slider}
-					/>
+					<button
+						onClick={goNext}
+						className={`${styles.navButton} ${styles.right}`}
+					>
+						›
+					</button>
+				</div>
 
-					<div className={styles.pageInputWrapper}>
+				<div className={styles.footer}>
+					<div className={styles.controls}>
 						<input
-							type="number"
-							min={1}
-							max={totalPages}
-							value={inputPage}
-							onChange={(e) => {
-								const val = Number(e.target.value);
-								setInputPage(val);
-							}}
-							onBlur={() => handleJump(inputPage - 1)}
-							onKeyDown={(e) => {
-								if (e.key === "Enter") {
-									handleJump(inputPage - 1);
-								}
-							}}
-							className={styles.pageInput}
+							type="range"
+							min={0}
+							max={totalPages - 1}
+							value={currentPage}
+							onChange={(e) =>
+								handleSliderChange(Number(e.target.value))
+							}
+							className={styles.slider}
 						/>
-						<span> /</span>
-						<span> {totalPages}</span>
+
+						<div className={styles.pageInputWrapper}>
+							<input
+								type="number"
+								min={1}
+								max={totalPages}
+								value={inputPage}
+								onChange={(e) => {
+									const val = Number(e.target.value);
+									setInputPage(val);
+								}}
+								onBlur={() => handleJump(inputPage - 1)}
+								onKeyDown={(e) => {
+									if (e.key === "Enter") {
+										handleJump(inputPage - 1);
+									}
+								}}
+								className={styles.pageInput}
+							/>
+							<span> /</span>
+							<span> {totalPages}</span>
+						</div>
 					</div>
 				</div>
-			</div>
+			</>
 		</div>
 	);
 }
