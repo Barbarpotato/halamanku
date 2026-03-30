@@ -15,6 +15,7 @@ export const createEbookUserContent = async (formData, ebookUser) => {
 				ebook_user_content_description:
 					formData.ebook_user_content_description.trim(),
 				is_published: false,
+				is_private: formData.is_private,
 			},
 		])
 		.select()

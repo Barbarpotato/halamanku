@@ -20,6 +20,7 @@ export const updateEbookUserContent = async (contentId, formData) => {
 		template_text_color: formData.template_text_color,
 		template_heading_text: formData.template_heading_text,
 		is_published: formData.is_published,
+		is_private: formData.is_private,
 	};
 
 	const { error: updateError } = await supabase
@@ -88,7 +89,7 @@ export const publishEbookUserContent = async (formData) => {
 
 		if (result.status === "SUCCESS") {
 			throw new Error(
-				"Konten Anda sedang diproses. Silakan coba lagi dalam beberapa menit."
+				"Konten Anda sedang diproses. Silakan coba lagi dalam beberapa menit.",
 			);
 		} else {
 			throw new Error(result.error || "Upload failed");
@@ -97,7 +98,7 @@ export const publishEbookUserContent = async (formData) => {
 
 	if (isUploadWorkerDone.upload_worker_status !== "SUCCESS") {
 		throw new Error(
-			"Konten Anda sedang diproses. Silakan coba lagi dalam beberapa menit."
+			"Konten Anda sedang diproses. Silakan coba lagi dalam beberapa menit.",
 		);
 	}
 

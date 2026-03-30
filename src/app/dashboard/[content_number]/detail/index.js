@@ -38,6 +38,7 @@ export default function Detail({
 		ebook_user_content_description:
 			content.ebook_user_content_description || "",
 		is_published: content.is_published || false,
+		is_private: content.is_private || false,
 	});
 
 	// Check for tab overflow
@@ -127,7 +128,7 @@ export default function Detail({
 							Umum
 						</button>
 
-						{content.is_published == true && (
+						{content.is_published == true && content.is_private && (
 							<button
 								type="button"
 								className={`tab-button ${activeTab === "access" ? "active" : ""}`}
@@ -174,15 +175,17 @@ export default function Detail({
 						/>
 					</div>
 
-					<div
-						className={`tab-content ${activeTab === "access" ? "active" : ""}`}
-					>
-						<AccessTab
-							content={content}
-							readOnly={readOnly}
-							modal={modal}
-						/>
-					</div>
+					{content.is_published == true && content.is_private && (
+						<div
+							className={`tab-content ${activeTab === "access" ? "active" : ""}`}
+						>
+							<AccessTab
+								content={content}
+								readOnly={readOnly}
+								modal={modal}
+							/>
+						</div>
+					)}
 				</form>
 			</main>
 		</div>

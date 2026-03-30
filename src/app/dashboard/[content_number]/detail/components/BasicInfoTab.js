@@ -117,7 +117,9 @@ export default function BasicInfoTab({
 
 		try {
 			await deletePdf(content.id, pdfPath);
-			await updateEbookUserContent(content.id, { storage_file_name: null });
+			await updateEbookUserContent(content.id, {
+				storage_file_name: null,
+			});
 			setPdfPath("");
 			setPreviewUrl(null);
 		} catch (err) {
@@ -136,7 +138,10 @@ export default function BasicInfoTab({
 					{pdfPath ? (
 						<div className="field">
 							<div className="mb-4">
-								<div className="border border-gray-300 rounded-lg overflow-hidden bg-white" style={{ height: '400px' }}>
+								<div
+									className="border border-gray-300 rounded-lg overflow-hidden bg-white"
+									style={{ height: "400px" }}
+								>
 									{previewLoading ? (
 										<div className="flex items-center justify-center h-full">
 											<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -146,7 +151,7 @@ export default function BasicInfoTab({
 											src={previewUrl}
 											width="100%"
 											height="100%"
-											style={{ border: 'none' }}
+											style={{ border: "none" }}
 											title="PDF Preview"
 										></iframe>
 									) : (
@@ -171,14 +176,18 @@ export default function BasicInfoTab({
 						</div>
 					) : readOnly ? (
 						<div className="field">
-							<div className="field-value">Tidak ada PDF yang diunggah</div>
+							<div className="field-value">
+								Tidak ada PDF yang diunggah
+							</div>
 						</div>
 					) : (
 						<>
 							{/* Show file input only if no file is uploaded yet */}
 							{!pdfPath && !pdfFile && (
 								<div className="field">
-									<label className="field-label">Unggah File PDF</label>
+									<label className="field-label">
+										Unggah File PDF
+									</label>
 									<div
 										onClick={triggerFileInput}
 										className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
@@ -220,7 +229,9 @@ export default function BasicInfoTab({
 							{/* Show selected file details if file is selected but not uploaded */}
 							{pdfFile && !pdfPath && (
 								<div className="field">
-									<label className="field-label">File PDF yang Dipilih</label>
+									<label className="field-label">
+										File PDF yang Dipilih
+									</label>
 									<div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
 										<div className="flex items-center justify-between">
 											<div className="flex items-center">
@@ -240,7 +251,12 @@ export default function BasicInfoTab({
 														{pdfFile.name}
 													</p>
 													<p className="text-xs text-gray-500">
-														{(pdfFile.size / 1024 / 1024).toFixed(2)} MB
+														{(
+															pdfFile.size /
+															1024 /
+															1024
+														).toFixed(2)}{" "}
+														MB
 													</p>
 												</div>
 											</div>
@@ -249,7 +265,8 @@ export default function BasicInfoTab({
 												onClick={() => {
 													setPdfFile(null);
 													if (fileInputRef.current) {
-														fileInputRef.current.value = "";
+														fileInputRef.current.value =
+															"";
 													}
 												}}
 												className="text-gray-400 hover:text-gray-600"
@@ -279,7 +296,9 @@ export default function BasicInfoTab({
 										disabled={pdfLoading || !pdfFile}
 										className="btn-primary"
 									>
-										{pdfLoading ? "Mengunggah..." : "Unggah PDF"}
+										{pdfLoading
+											? "Mengunggah..."
+											: "Unggah PDF"}
 									</button>
 								</div>
 							)}
@@ -293,7 +312,8 @@ export default function BasicInfoTab({
 						<label className="field-label">Judul</label>
 						{readOnly ? (
 							<div className="field-value">
-								{content.ebook_user_content_title || "Tanpa judul"}
+								{content.ebook_user_content_title ||
+									"Tanpa judul"}
 							</div>
 						) : (
 							<input
@@ -327,6 +347,23 @@ export default function BasicInfoTab({
 							/>
 						)}
 
+						<div className="field mt-2">
+							<label className="field-label flex items-center">
+								<input
+									type="checkbox"
+									id="is_private"
+									name="is_private"
+									checked={formData.is_private}
+									onChange={handleChange}
+									disabled={isPublished}
+									className="mr-2 h-4 w-4"
+								/>
+								<p>
+									Hanya pengguna yang memiliki akses yang
+									dapat melihat konten ini
+								</p>
+							</label>
+						</div>
 
 						{!readOnly && (
 							<button
@@ -341,7 +378,6 @@ export default function BasicInfoTab({
 					</div>
 				</div>
 			</div>
-
 		</div>
 	);
 }

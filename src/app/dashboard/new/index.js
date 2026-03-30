@@ -20,14 +20,15 @@ export default function New({ user, ebookUser, templates }) {
 	const [formData, setFormData] = useState({
 		ebook_user_content_title: "",
 		ebook_user_content_description: "",
+		is_private: false,
 	});
 
 	const handleChange = (e) => {
-		const { name, value } = e.target;
+		const { name, value, type, checked } = e.target;
 
 		setFormData((prev) => ({
 			...prev,
-			[name]: value,
+			[name]: type === "checkbox" ? checked : value,
 		}));
 	};
 
@@ -121,6 +122,22 @@ export default function New({ user, ebookUser, templates }) {
 								placeholder="Masukkan deskripsi ebook"
 								className="field-input"
 							/>
+						</div>
+
+						{/* IS PRIVATE */}
+						<div className="field">
+							<label className="field-label flex items-center">
+								<input
+									type="checkbox"
+									id="is_private"
+									name="is_private"
+									checked={formData.is_private}
+									onChange={handleChange}
+									className="mr-2 h-4 w-4"
+								/>
+								Hanya pengguna yang memiliki akses yang dapat
+								melihat konten ini
+							</label>
 						</div>
 					</div>
 
