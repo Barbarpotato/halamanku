@@ -108,7 +108,7 @@ export default function Index({ user, ebookUser, userContents }) {
 									</div>
 									<div className="flex gap-2">
 										<Link
-											href={`/dashboard/${content.ebook_user_content_number}/detail`}
+											href={`/dashboard/${content.ebook_user_content_number}/detail/general`}
 											prefetch
 											className="btn-action"
 										>

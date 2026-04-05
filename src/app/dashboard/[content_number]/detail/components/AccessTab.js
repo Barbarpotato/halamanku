@@ -126,7 +126,8 @@ export default function AccessTab({ content, readOnly = false }) {
 					<div>
 						<h2 className="section-title">Manajemen Akses</h2>
 						<p className="section-description">
-							Kelola alamat email yang memiliki akses ke konten ini
+							Kelola alamat email yang memiliki akses ke konten
+							ini
 						</p>
 					</div>
 					<button
@@ -137,8 +138,19 @@ export default function AccessTab({ content, readOnly = false }) {
 						}}
 						className="btn-primary flex items-center gap-2"
 					>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-							<path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+						>
+							<path
+								d="M12 5v14M5 12h14"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							/>
 						</svg>
 					</button>
 				</div>
@@ -157,7 +169,6 @@ export default function AccessTab({ content, readOnly = false }) {
 				</div>
 			)}
 
-
 			<div className="filters-section">
 				<div className="flex items-center justify-between">
 					<h2 className="section-title">Daftar Akses Pengguna</h2>
@@ -170,7 +181,14 @@ export default function AccessTab({ content, readOnly = false }) {
 						className="p-2 text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
 						title="Cari pengguna"
 					>
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+						<svg
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+						>
 							<circle cx="11" cy="11" r="8" />
 							<path d="M21 21l-4.35-4.35" />
 						</svg>
@@ -178,7 +196,8 @@ export default function AccessTab({ content, readOnly = false }) {
 				</div>
 				{emailFilter && (
 					<p className="text-sm text-gray-600 mt-1">
-						Anda sedang mencari: <span className="font-medium">{emailFilter}</span>
+						Anda sedang mencari:{" "}
+						<span className="font-medium">{emailFilter}</span>
 					</p>
 				)}
 			</div>
@@ -238,7 +257,7 @@ export default function AccessTab({ content, readOnly = false }) {
 									<button
 										onClick={(e) => {
 											e.preventDefault();
-											handleDelete(access.id)
+											handleDelete(access.id);
 										}}
 										disabled={deleteMutation.isPending}
 										className="btn-danger-outline btn-sm"
@@ -284,7 +303,9 @@ export default function AccessTab({ content, readOnly = false }) {
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 					<div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
 						<div className="flex justify-between items-center mb-4">
-							<h3 className="text-lg font-semibold text-gray-900">Tambah Akses Baru</h3>
+							<h3 className="text-lg font-semibold text-gray-900">
+								Tambah Akses Baru
+							</h3>
 							<button
 								type="button"
 								onClick={(e) => {
@@ -311,7 +332,9 @@ export default function AccessTab({ content, readOnly = false }) {
 									className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
 								/>
 								{emailError && (
-									<p className="text-red-600 text-sm mt-1">{emailError}</p>
+									<p className="text-red-600 text-sm mt-1">
+										{emailError}
+									</p>
 								)}
 							</div>
 							<div className="flex justify-end gap-2">
@@ -332,10 +355,16 @@ export default function AccessTab({ content, readOnly = false }) {
 										handleAddEmail();
 										setShowAddModal(false);
 									}}
-									disabled={createMutation.isPending || !newEmail.trim() || emailError}
+									disabled={
+										createMutation.isPending ||
+										!newEmail.trim() ||
+										emailError
+									}
 									className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
 								>
-									{createMutation.isPending ? "Menambahkan..." : "Berikan Akses"}
+									{createMutation.isPending
+										? "Menambahkan..."
+										: "Berikan Akses"}
 								</button>
 							</div>
 						</div>
@@ -348,7 +377,9 @@ export default function AccessTab({ content, readOnly = false }) {
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 					<div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
 						<div className="flex justify-between items-center mb-4">
-							<h3 className="text-lg font-semibold text-gray-900">Cari Pengguna</h3>
+							<h3 className="text-lg font-semibold text-gray-900">
+								Cari Pengguna
+							</h3>
 							<button
 								type="button"
 								onClick={(e) => {

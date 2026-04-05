@@ -11,13 +11,18 @@
 		"@supabase/ssr": "^0.9.0",
 		"@supabase/supabase-js": "^2.99.1",
 		"@tanstack/react-query": "^5.90.21",
+		"canvas": "^3.2.3",
 		"next": "15.5.12",
 		"react": "19.1.0",
+		"react-chrono": "^2.9.1",
 		"react-dom": "19.1.0",
 		"react-pageflip": "^2.0.3",
+		"react-pdf": "^10.4.1",
 		"tailwindcss": "^3.4.19"
 	},
 	"devDependencies": {
-		"autoprefixer": "^10.4.27"
+		"@types/react": "19.2.14",
+		"autoprefixer": "^10.4.27",
+		"typescript": "6.0.2"
 	}
 }

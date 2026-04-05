@@ -26,6 +26,7 @@ export const createEbookUserContentAccess = async (
 		.from("ebook_user_content_access")
 		.upsert(
 			{
+				created: new Date().toISOString(),
 				ebook_user_content_id: contentId,
 				ebook_user_content_number: contentNumber,
 				email_address: emailAddress.trim(),

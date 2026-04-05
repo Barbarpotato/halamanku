@@ -72,9 +72,7 @@ export const getPdfUrl = async (pdfPath) => {
 	}
 };
 
-
 export const deletePdf = async (contentId, storage_file_name) => {
-
 	if (!storage_file_name) {
 		throw new Error("No file to delete");
 	}
@@ -113,7 +111,7 @@ export const deletePdf = async (contentId, storage_file_name) => {
 		.update({
 			storage_file_total_page: null,
 			upload_worker_status: "IDLE",
-			storage_file_name: null
+			storage_file_name: null,
 		})
 		.eq("id", contentId);
 
