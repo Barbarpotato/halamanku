@@ -8,6 +8,7 @@ import TabActions from "../components/TabActions";
 import TabNavigation from "../components/TabNavigation";
 import QuestionsTab from "../components/QuestionsTab";
 import Breadcrumb from "@/components/Breadcrumb";
+import ClientStepperWrapper from "./ClientWrapper";
 
 export default function QuestionsDetail({
 	user,
@@ -41,8 +42,8 @@ export default function QuestionsDetail({
 
 					<TabActions
 						router={router}
-						setError={() => {}}
-						setLoading={() => {}}
+						setError={() => { }}
+						setLoading={() => { }}
 						showPublishButton={showPublishButton}
 						showDeleteButton={showDeleteButton}
 						formData={{}}
@@ -56,9 +57,7 @@ export default function QuestionsDetail({
 				</div>
 
 				<TabNavigation content={content} />
-				<div className="form-card">
-					<QuestionsTab content={content} />
-				</div>
+				<ClientStepperWrapper user={user} ebookUser={ebookUser} content={content} />
 			</main>
 		</div>
 	);
