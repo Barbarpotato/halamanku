@@ -9,10 +9,12 @@ import TabNavigation from "../components/TabNavigation";
 import Breadcrumb from "@/components/body/Breadcrumb";
 import ClientStepperWrapper from "./components/ClientWrapper";
 
-export default function QuestionsDetail({
+export default function Interaction({
 	user,
 	ebookUser,
 	content,
+	reactions,
+	questions,
 	readOnly = false,
 }) {
 	const router = useRouter();
@@ -60,6 +62,8 @@ export default function QuestionsDetail({
 					user={user}
 					ebookUser={ebookUser}
 					content={content}
+					reactions={reactions}
+					questions={questions}
 				/>
 			</main>
 		</div>

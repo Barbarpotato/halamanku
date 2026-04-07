@@ -3,14 +3,14 @@ import {
 	getReactionsByContentId,
 	getHighlightedReactionsByContentId,
 	getReactionById,
-} from "@/services/ebookUserContentReaction/get";
-import { createReaction } from "@/services/ebookUserContentReaction/create";
-import { updateReaction } from "@/services/ebookUserContentReaction/update";
-import { authorRespond } from "@/services/ebookUserContentReaction/respond";
+} from "@/services/UserContentReaction/get";
+import { createReaction } from "@/services/UserContentReaction/create";
+import { updateReaction } from "@/services/UserContentReaction/update";
+import { authorRespond } from "@/services/UserContentReaction/respond";
 import {
 	highlightReaction,
 	unhighlightReaction,
-} from "@/services/ebookUserContentReaction/highlight";
+} from "@/services/UserContentReaction/highlight";
 
 export async function GET(req) {
 	try {

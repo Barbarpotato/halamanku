@@ -5,19 +5,25 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useModal } from "@/components/modal/ModalProvider";
 import {
-	FaRegLightbulb,
 	FaRegFileAlt,
-	FaPlus,
-	FaHeart,
-	FaThumbsUp,
-	FaEye,
 	FaQuestion,
-	FaThumbsDown,
 	FaChevronDown,
 	FaChevronUp,
+	FaClock,
 } from "react-icons/fa";
+import { RiChat3Line } from "react-icons/ri";
+import Toolbar from "./Toolbar";
+import QuestionModal from "./QuestionModal";
+import PageImageModal from "./PageImageModal";
+import ExpandableContent from "./ExpandableContent";
 
-const VerticalStepper = ({ totalPages, contentNumber, contentId }) => {
+const VerticalStepper = ({
+	totalPages,
+	contentNumber,
+	content,
+	reactions: initialReactions,
+	questions: initialQuestions,
+}) => {
 	const router = useRouter();
 	const modal = useModal();
 
@@ -33,15 +39,23 @@ const VerticalStepper = ({ totalPages, contentNumber, contentId }) => {
 	const [modalMode, setModalMode] = useState("create");
 	const [editingQuestion, setEditingQuestion] = useState(null);
 
-	const [reactions, setReactions] = useState([]);
-	const [questions, setQuestions] = useState([]);
-	const [loadingData, setLoadingData] = useState(true);
-	const [tokenReady, setTokenReady] = useState(false);
+	const [reactions, setReactions] = useState(initialReactions || []);
+	const [questions, setQuestions] = useState(initialQuestions || []);
+	const [loadingData, setLoadingData] = useState(false);
 	const [expandedPages, setExpandedPages] = useState(new Set([1]));
 	const [jumpToPage, setJumpToPage] = useState("");
 
 	const tokenRef = useRef(null);
 	const supabase = useMemo(() => createClient(), []);
+
+	// Sync state with props
+	useEffect(() => {
+		setReactions(initialReactions || []);
+	}, [initialReactions]);
+
+	useEffect(() => {
+		setQuestions(initialQuestions || []);
+	}, [initialQuestions]);
 
 	// Group data by page
 	const pageData = useMemo(() => {
@@ -63,83 +77,18 @@ const VerticalStepper = ({ totalPages, contentNumber, contentId }) => {
 			} = await supabase.auth.getSession();
 			if (session?.access_token) {
 				tokenRef.current = session.access_token;
-				setTokenReady(true);
 			}
 		};
 		getToken();
 	}, [supabase]);
 
-	// Fetch reactions and questions
-	useEffect(() => {
-		const fetchData = async () => {
-			if (!tokenReady || !contentId) return;
-
-			try {
-				const [reactionsRes, questionsRes] = await Promise.all([
-					fetch(
-						`/api/ebook-user-content-reaction?contentId=${contentId}`,
-						{
-							headers: {
-								Authorization: `Bearer ${tokenRef.current}`,
-							},
-						},
-					),
-					fetch(
-						`/api/ebook-user-content-question?contentId=${contentId}`,
-						{
-							headers: {
-								Authorization: `Bearer ${tokenRef.current}`,
-							},
-						},
-					),
-				]);
-
-				if (reactionsRes.ok) {
-					const reactionsData = await reactionsRes.json();
-					setReactions(reactionsData.data || []);
-				}
-				if (questionsRes.ok) {
-					const questionsData = await questionsRes.json();
-					setQuestions(questionsData.data || []);
-				}
-			} catch (error) {
-				console.error("Failed to fetch data:", error);
-			} finally {
-				setLoadingData(false);
-			}
-		};
-
-		fetchData();
-	}, [contentId, tokenReady]);
-
 	// Refresh data after mutation
-	const refreshData = async () => {
+	const refreshData = () => {
 		router.refresh();
-		try {
-			const res = await fetch(
-				`/api/ebook-user-content-question?contentId=${contentId}`,
-				{
-					headers: { Authorization: `Bearer ${tokenRef.current}` },
-				},
-			);
-			if (res.ok) {
-				setQuestions((await res.json()).data || []);
-			}
-		} catch (err) {
-			console.error("Failed to refresh questions:", err);
-		}
 	};
 
 	const togglePage = (pageNum) => {
-		setExpandedPages((prev) => {
-			const newSet = new Set(prev);
-			if (newSet.has(pageNum)) {
-				newSet.delete(pageNum);
-			} else {
-				newSet.add(pageNum);
-			}
-			return newSet;
-		});
+		setExpandedPages(new Set([pageNum]));
 	};
 
 	const jumpTo = (pageNum) => {
@@ -193,7 +142,7 @@ const VerticalStepper = ({ totalPages, contentNumber, contentId }) => {
 		const action = modalMode === "edit" ? "update" : "create";
 		const payload = {
 			action,
-			ebookUserContentId: contentId,
+			ebookUserContentId: content.id,
 			pageNumber: currentQuestionPage,
 			question: questionFormData.question,
 		};
@@ -288,27 +237,31 @@ const VerticalStepper = ({ totalPages, contentNumber, contentId }) => {
 		const thoughtCount = data.reactions.filter(
 			(r) => r.react_type === "THOUGHT",
 		).length;
+		const pendingResponseCount = data.reactions.filter(
+			(r) => r.author_response == null,
+		).length;
 
 		const emotionCounts = {
-			like: data.reactions.filter((r) => r.emotion_type === "like")
+			like: data.reactions.filter((r) => r.emotion_type === "LIKE")
 				.length,
-			love: data.reactions.filter((r) => r.emotion_type === "love")
+			love: data.reactions.filter((r) => r.emotion_type === "LOVE")
 				.length,
 			thinking: data.reactions.filter(
-				(r) => r.emotion_type === "thinking",
+				(r) => r.emotion_type === "THINKING",
 			).length,
-			seen: data.reactions.filter((r) => r.emotion_type === "seen")
+			seen: data.reactions.filter((r) => r.emotion_type === "SEEN")
 				.length,
-			dislike: data.reactions.filter((r) => r.emotion_type === "dislike")
+			dislike: data.reactions.filter((r) => r.emotion_type === "DISLIKE")
 				.length,
 			confused: data.reactions.filter(
-				(r) => r.emotion_type === "confused",
+				(r) => r.emotion_type === "CONFUSED",
 			).length,
 		};
 
 		return {
 			answerCount,
 			thoughtCount,
+			pendingResponseCount,
 			emotionCounts,
 			questions: data.questions,
 		};
@@ -327,51 +280,12 @@ const VerticalStepper = ({ totalPages, contentNumber, contentId }) => {
 
 	return (
 		<div className="w-full  mx-auto px-4">
-			{/* Toolbar - First & Last Page */}
-			<div className="sticky top-3 z-40 bg-white border border-gray-200 shadow-md rounded-2xl p-4 sm:p-5 mb-8">
-				<div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-					<div className="font-medium text-gray-700 text-sm sm:text-base whitespace-nowrap">
-						Lompat ke Halaman
-					</div>
-
-					<div className="flex w-full gap-2 sm:gap-3">
-						<button
-							onClick={() => jumpTo(1)}
-							className="px-4 py-3 text-white rounded-xl transition active:scale-95 flex justify-center"
-							style={{ backgroundColor: "var(--color-primary)" }}
-						>
-							<FaChevronUp size={18} />
-						</button>
-
-						<input
-							type="number"
-							min={1}
-							max={totalPages}
-							value={jumpToPage}
-							onChange={(e) => setJumpToPage(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === "Enter") {
-									const page = Number(jumpToPage);
-									if (page >= 1 && page <= totalPages) {
-										jumpTo(page);
-										setJumpToPage("");
-									}
-								}
-							}}
-							placeholder={`1-${totalPages}`}
-							className="flex-1 text-gray-800 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm"
-						/>
-
-						<button
-							onClick={() => jumpTo(totalPages)}
-							className="px-4 py-3 text-white rounded-xl transition active:scale-95 flex justify-center"
-							style={{ backgroundColor: "var(--color-primary)" }}
-						>
-							<FaChevronDown size={18} />
-						</button>
-					</div>
-				</div>
-			</div>
+			<Toolbar
+				totalPages={totalPages}
+				jumpToPage={jumpToPage}
+				setJumpToPage={setJumpToPage}
+				jumpTo={jumpTo}
+			/>
 
 			{/* Vertical Stepper */}
 			<div className="relative pl-6 sm:pl-12">
@@ -384,6 +298,7 @@ const VerticalStepper = ({ totalPages, contentNumber, contentId }) => {
 					const {
 						answerCount,
 						thoughtCount,
+						pendingResponseCount,
 						emotionCounts,
 						questions,
 					} = getPageStats(pageNum);
@@ -416,11 +331,32 @@ const VerticalStepper = ({ totalPages, contentNumber, contentId }) => {
 									className="flex items-center justify-between px-4 sm:px-7 py-6 cursor-pointer hover:bg-gray-50 transition-colors"
 								>
 									<div className="flex items-center gap-4">
-										<p className="text-sm text-gray-500">
-											{questions.length} pertanyaan •{" "}
-											{thoughtCount + answerCount}{" "}
-											interaksi
-										</p>
+										<div className="flex items-center gap-3">
+											<span
+												className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full cursor-pointer"
+												title={`${thoughtCount + answerCount} Total interaksi dengan pembaca`}
+												onClick={() =>
+													modal.show({
+														message: `${thoughtCount + answerCount} Total interaksi dengan pembaca`,
+													})
+												}
+											>
+												<RiChat3Line size={10} />
+												{thoughtCount + answerCount}
+											</span>
+											<span
+												className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-yellow-800 text-xs font-medium rounded-full cursor-pointer"
+												title={`${pendingResponseCount} Menunggu tanggapan penulis`}
+												onClick={() =>
+													modal.show({
+														message: `${pendingResponseCount} Menunggu tanggapan penulis`,
+													})
+												}
+											>
+												<FaClock size={10} />
+												{pendingResponseCount}
+											</span>
+										</div>
 									</div>
 
 									<div className="flex items-center gap-4">
@@ -433,6 +369,20 @@ const VerticalStepper = ({ totalPages, contentNumber, contentId }) => {
 										>
 											<FaRegFileAlt size={23} />
 										</button>
+										{questions.length > 0 && (
+											<FaQuestion
+												size={18}
+												className="text-blue-500 cursor-pointer"
+												title="Halaman ini memiliki pertanyaan kepada pembaca"
+												onClick={(e) => {
+													e.stopPropagation();
+													modal.show({
+														message:
+															"Halaman ini memiliki pertanyaan kepada pembaca",
+													});
+												}}
+											/>
+										)}
 										{isExpanded ? (
 											<FaChevronUp size={22} />
 										) : (
@@ -449,137 +399,20 @@ const VerticalStepper = ({ totalPages, contentNumber, contentId }) => {
 											: "max-h-0 opacity-0"
 									}`}
 								>
-									<div className="px-4 sm:px-7 pb-8 border-t border-gray-100">
-										{/* Emotion Counters */}
-										<div className="grid grid-cols-3 sm:grid-cols-6 gap-4 py-6 border-b">
-											{[
-												{
-													icon: FaThumbsUp,
-													count: emotionCounts.like,
-													color: "text-green-500",
-												},
-												{
-													icon: FaHeart,
-													count: emotionCounts.love,
-													color: "text-red-500",
-												},
-												{
-													icon: FaRegLightbulb,
-													count: thoughtCount,
-													color: "text-yellow-500",
-												},
-												{
-													icon: FaEye,
-													count: emotionCounts.seen,
-													color: "text-gray-500",
-												},
-												{
-													icon: FaQuestion,
-													count: emotionCounts.thinking,
-													color: "text-purple-500",
-												},
-												{
-													icon: FaThumbsDown,
-													count: answerCount,
-													color: "",
-													style: {
-														color: "var(--color-primary)",
-													},
-												},
-											].map((item, idx) => (
-												<div
-													key={idx}
-													className="text-center"
-												>
-													<item.icon
-														className={`${item.color} text-2xl mx-auto mb-1`}
-														style={item.style}
-													/>
-													<div className="font-bold text-gray-900 text-lg">
-														{item.count}
-													</div>
-												</div>
-											))}
-										</div>
-
-										{/* Overview */}
-										<div className="py-6 border-b border-gray-100">
-											<div className="font-semibold text-gray-900 mb-4">
-												Overview
-											</div>
-											<div className="grid grid-cols-2 gap-6 text-sm">
-												<div className="flex justify-between">
-													<span className="text-gray-600">
-														Total Thoughts
-													</span>
-													<span className="font-medium">
-														{thoughtCount}
-													</span>
-												</div>
-												<div className="flex justify-between">
-													<span className="text-gray-600">
-														Total Answered
-													</span>
-													<span className="font-medium">
-														{answerCount}
-													</span>
-												</div>
-											</div>
-										</div>
-
-										{/* Action Section */}
-										<div className="pt-6">
-											<div className="font-semibold text-gray-900 mb-4">
-												Action
-											</div>
-
-											{hasQuestion ? (
-												<div className="bg-gray-50 p-4 rounded-xl">
-													<p className="text-sm text-gray-800 mb-3 line-clamp-2">
-														{questions[0].question}
-													</p>
-													<div className="flex flex-col sm:flex-row gap-2">
-														<button
-															onClick={() =>
-																handleEditQuestion(
-																	questions[0],
-																)
-															}
-															className="btn-primary"
-															style={{
-																backgroundColor:
-																	"var(--color-primary)",
-															}}
-														>
-															Edit Pertanyaan
-														</button>
-														<button
-															onClick={() =>
-																handleDeleteQuestion(
-																	questions[0]
-																		.id,
-																)
-															}
-															className="btn-danger"
-														>
-															Hapus Pertanyaan
-														</button>
-													</div>
-												</div>
-											) : (
-												<button
-													onClick={() =>
-														handleCreateQuestion(
-															pageNum,
-														)
-													}
-													className="btn-primary"
-												>
-													Buat Pertanyaan
-												</button>
-											)}
-										</div>
-									</div>
+									<ExpandableContent
+										pageNum={pageNum}
+										hasQuestion={hasQuestion}
+										questions={questions}
+										content={content}
+										emotionCounts={emotionCounts}
+										handleEditQuestion={handleEditQuestion}
+										handleDeleteQuestion={
+											handleDeleteQuestion
+										}
+										handleCreateQuestion={
+											handleCreateQuestion
+										}
+									/>
 								</div>
 							</div>
 						</div>
@@ -587,94 +420,22 @@ const VerticalStepper = ({ totalPages, contentNumber, contentId }) => {
 				})}
 			</div>
 
-			{/* Page Image Modal */}
-			{isModalOpen && (
-				<div
-					className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-					onClick={closeModal}
-				>
-					<div
-						className="bg-white rounded-xl p-4 overflow-auto relative"
-						onClick={(e) => e.stopPropagation()}
-					>
-						<button
-							onClick={closeModal}
-							className="absolute top-4 right-4 text-4xl text-gray-400 hover:text-gray-900 transition-colors"
-						>
-							×
-						</button>
-						<h2 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-900">
-							Halaman {selectedPage}
-						</h2>
-						{pageImageUrl ? (
-							<img
-								src={pageImageUrl}
-								alt={`Page ${selectedPage}`}
-								className="mx-auto max-h-[80vh] w-auto"
-							/>
-						) : (
-							<p className="text-red-500 text-center py-12">
-								Gagal memuat gambar halaman
-							</p>
-						)}
-					</div>
-				</div>
-			)}
+			<PageImageModal
+				isModalOpen={isModalOpen}
+				closeModal={closeModal}
+				selectedPage={selectedPage}
+				pageImageUrl={pageImageUrl}
+			/>
 
-			{/* Question Modal */}
-			{showQuestionModal && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-					<div
-						className="fixed inset-0 bg-black/60"
-						onClick={closeQuestionModal}
-					/>
-					<div className="relative bg-gray-50 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl">
-						<div className="p-8">
-							<h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-6">
-								{modalMode === "create"
-									? "Tambah Pertanyaan"
-									: "Edit Pertanyaan"}
-							</h3>
-							<textarea
-								value={questionFormData.question}
-								onChange={(e) =>
-									setQuestionFormData({
-										question: e.target.value,
-									})
-								}
-								style={{ resize: "none" }}
-								className="w-full text-gray-800 h-44 border border-gray-300 rounded-2xl p-5 focus:outline-none focus:ring-2 focus:ring-blue-600 resize-y text-base"
-								placeholder="Tulis pertanyaan Anda di sini..."
-							/>
-						</div>
-						<div className="bg-gray-50 px-8 py-6 flex gap-3 justify-end">
-							<button
-								onClick={closeQuestionModal}
-								className="px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-400 disabled:opacity-50"
-							>
-								Batal
-							</button>
-							<button
-								onClick={handleSubmitQuestion}
-								disabled={
-									creatingQuestion ||
-									!questionFormData.question.trim()
-								}
-								className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-								style={{
-									backgroundColor: "var(--color-primary)",
-								}}
-							>
-								{creatingQuestion
-									? "Menyimpan..."
-									: modalMode === "create"
-										? "Tambahkan"
-										: "Update"}
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
+			<QuestionModal
+				showQuestionModal={showQuestionModal}
+				closeQuestionModal={closeQuestionModal}
+				questionFormData={questionFormData}
+				setQuestionFormData={setQuestionFormData}
+				creatingQuestion={creatingQuestion}
+				handleSubmitQuestion={handleSubmitQuestion}
+				modalMode={modalMode}
+			/>
 
 			{/* Loading Overlay */}
 			{loadingPage && (

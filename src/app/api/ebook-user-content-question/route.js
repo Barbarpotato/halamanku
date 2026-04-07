@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import {
 	getQuestionsByContentId,
 	getQuestionByPage,
-} from "@/services/ebookUserContentQuestion/get";
-import { createQuestion } from "@/services/ebookUserContentQuestion/create";
-import { updateQuestion } from "@/services/ebookUserContentQuestion/update";
-import { deleteQuestion } from "@/services/ebookUserContentQuestion/delete";
+} from "@/services/UserContentQuestion/get";
+import { createQuestion } from "@/services/UserContentQuestion/create";
+import { updateQuestion } from "@/services/UserContentQuestion/update";
+import { deleteQuestion } from "@/services/UserContentQuestion/delete";
 
 export async function GET(req) {
 	try {

@@ -27,6 +27,7 @@ export const deleteEbookUserContent = async (content) => {
 		);
 	}
 
+	// if storage_file name exist, delete the file async
 	if (content.storage_file_name) {
 		const formData = new FormData();
 		formData.append("path", content.storage_file_name);
@@ -54,6 +55,26 @@ export const deleteEbookUserContent = async (content) => {
 
 	if (deleteEbookContentAccess) {
 		throw deleteEbookContentAccess;
+	}
+
+	// Delete the questions
+	const { error: deleteEbookContentQuestion } = await supabase
+		.from("ebook_user_content_question")
+		.delete()
+		.eq("ebook_user_content_number", content.ebook_user_content_number);
+
+	if (deleteEbookContentQuestion) {
+		throw deleteEbookContentQuestion;
+	}
+
+	// Delete the reactions
+	const { error: deleteEbookContentReaction } = await supabase
+		.from("ebook_user_content_reaction")
+		.delete()
+		.eq("ebook_user_content_number", content.ebook_user_content_number);
+
+	if (deleteEbookContentReaction) {
+		throw deleteEbookContentReaction;
 	}
 
 	// Delete the ebook
