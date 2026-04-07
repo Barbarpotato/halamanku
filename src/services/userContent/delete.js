@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import { STORAGE_URL } from "@/lib/supabase";
+import { STORAGE_URL } from "@/lib/supabase/supabase";
 
 const supabase = createClient();
 
@@ -9,7 +9,6 @@ const getAnonKey = () => {
 };
 
 export const deleteEbookUserContent = async (content) => {
-
 	// check the content is exist or not
 	const { data: contentData, error: contentError } = await supabase
 		.from("ebook_user_content")
@@ -24,7 +23,7 @@ export const deleteEbookUserContent = async (content) => {
 	// cannot delete if the upload worker is on the processing
 	if (contentData.upload_worker_status == "PROCESSING") {
 		throw new Error(
-			"Konten Anda sedang diproses.Silakan coba lagi dalam beberapa menit."
+			"Konten Anda sedang diproses.Silakan coba lagi dalam beberapa menit.",
 		);
 	}
 

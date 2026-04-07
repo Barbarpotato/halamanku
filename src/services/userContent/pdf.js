@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import { STORAGE_URL } from "@/lib/supabase";
+import { STORAGE_URL } from "@/lib/supabase/supabase";
 
 const supabase = createClient();
 

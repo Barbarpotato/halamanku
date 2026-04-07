@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createEbookUserContentAccess } from "@/services/userContentAccess/create";
 import { createClient } from "@/lib/supabase/server";
-import { decrypt } from "@/lib/encryption";
+import { decrypt } from "@/lib/utils/encryption";
 
 export async function POST(request, { params }) {
 	const { user_number } = await params;

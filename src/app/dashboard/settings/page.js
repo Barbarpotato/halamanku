@@ -4,11 +4,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import Breadcrumb from "@/components/Breadcrumb";
-import PageHeader from "@/components/PageHeader";
+import Breadcrumb from "@/components/body/Breadcrumb";
+import PageHeader from "@/components/body/PageHeader";
 import CopyWebhook from "./components/CopyWebhook";
 import MerchantKeyInput from "./components/MerchantKeyInput";
-import DetailLoading from "@/components/Skeletons/Detail";
+import DetailLoading from "@/components/skeletons/Detail";
 
 export default function SettingsPage() {
 	const [user, setUser] = useState(null);

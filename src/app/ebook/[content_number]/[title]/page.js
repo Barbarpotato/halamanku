@@ -1,6 +1,7 @@
-import EbookReader from "./EbookReader";
+import EbookReader from ".";
 import { createClient } from "@/lib/supabase/client";
-import ErrorPage from "@/components/ErrorPage";
+import ErrorPage from "@/components/body/ErrorPage";
+import { MdSearchOff } from "react-icons/md";
 
 export default async function Page({ params }) {
 	const { content_number, title } = await params;
@@ -19,27 +20,7 @@ export default async function Page({ params }) {
 	// Content not found
 	if (error || !data) {
 		const notFoundIcon = (
-			<svg
-				className="mx-auto h-24 w-24 text-gray-400"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke="currentColor"
-				aria-hidden="true"
-			>
-				<path
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					strokeWidth={1}
-					d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-				/>
-				<path
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					strokeWidth={2}
-					d="M13 13l6 6"
-					className="text-gray-300"
-				/>
-			</svg>
+			<MdSearchOff className="mx-auto h-24 w-24 text-gray-400" />
 		);
 
 		return (

@@ -1,7 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import QueryProvider from "@/components/QueryProvider";
-import { ModalProvider } from "@/components/ModalProvider";
+import QueryProvider from "@/lib/reactQuery/QueryProvider";
+import { ModalProvider } from "@/components/modal/ModalProvider";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",

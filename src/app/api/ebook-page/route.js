@@ -1,4 +1,4 @@
-import { SHARD_URL } from "@/lib/supabase";
+import { SHARD_URL } from "@/lib/supabase/supabase";
 
 export async function GET(req) {
 	try {
