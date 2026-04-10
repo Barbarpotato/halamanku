@@ -54,20 +54,6 @@ export default function TabNavigation({ content }) {
 				Umum
 			</button>
 
-			{content.is_published == true && content.is_private && (
-				<button
-					type="button"
-					className={`tab-button ${activeTab === "access" ? "active" : ""}`}
-					onClick={() =>
-						router.push(
-							`/dashboard/${params.content_number}/detail/access`,
-						)
-					}
-				>
-					Akses
-				</button>
-			)}
-
 			<button
 				type="button"
 				className={`tab-button ${activeTab === "interaction" ? "active" : ""}`}
@@ -78,6 +64,18 @@ export default function TabNavigation({ content }) {
 				}
 			>
 				Interaksi
+			</button>
+
+			<button
+				type="button"
+				className={`tab-button ${activeTab === "access" ? "active" : ""}`}
+				onClick={() =>
+					router.push(
+						`/dashboard/${params.content_number}/detail/access`,
+					)
+				}
+			>
+				Akses
 			</button>
 
 			{hasOverflow && (

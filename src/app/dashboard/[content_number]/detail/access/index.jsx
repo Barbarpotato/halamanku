@@ -63,6 +63,7 @@ export default function AccessDetail({
 						content={content}
 						readOnly={readOnly}
 						modal={modal}
+						user={user}
 					/>
 				</div>
 			</main>

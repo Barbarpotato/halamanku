@@ -14,12 +14,14 @@ export default function ClientStepperWrapper({
 	questions,
 }) {
 	return (
-		<VerticalStepper
-			totalPages={content.storage_file_total_page}
-			contentNumber={content.ebook_user_content_number}
-			content={content}
-			reactions={reactions}
-			questions={questions}
-		/>
+		<div className="form-card">
+			<VerticalStepper
+				totalPages={content.storage_file_total_page}
+				contentNumber={content.ebook_user_content_number}
+				content={content}
+				reactions={reactions}
+				questions={questions}
+			/>
+		</div>
 	);
 }

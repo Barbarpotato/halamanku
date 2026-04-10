@@ -12,6 +12,8 @@ import {
 	FaClock,
 } from "react-icons/fa";
 import { RiChat3Line } from "react-icons/ri";
+import { MdOutlineDescription } from "react-icons/md";
+import NotFound from "@/components/body/NotFound";
 import Toolbar from "./Toolbar";
 import QuestionModal from "./QuestionModal";
 import PageImageModal from "./PageImageModal";
@@ -267,6 +269,18 @@ const VerticalStepper = ({
 		};
 	};
 
+	if (!content.storage_file_name || !content.storage_file_total_page) {
+		return (
+			<NotFound
+				icon={
+					<MdOutlineDescription className="mx-auto h-12 w-12 text-gray-400" />
+				}
+				title="Belum ada interaksi untuk saat ini"
+				description="Anda belum mengunggah file PDF anda."
+			/>
+		);
+	}
+
 	if (loadingData) {
 		return (
 			<div className="flex items-center justify-center py-12">
@@ -334,10 +348,10 @@ const VerticalStepper = ({
 										<div className="flex items-center gap-3">
 											<span
 												className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full cursor-pointer"
-												title={`${thoughtCount + answerCount} Total interaksi dengan pembaca`}
+												title={`${thoughtCount + answerCount} Total reaksi dari pembaca`}
 												onClick={() =>
 													modal.show({
-														message: `${thoughtCount + answerCount} Total interaksi dengan pembaca`,
+														message: `${thoughtCount + answerCount} Total reaksi dari pembaca`,
 													})
 												}
 											>

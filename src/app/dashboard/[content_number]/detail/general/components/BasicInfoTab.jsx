@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { createClient } from "@/lib/supabase/client";
 import { uploadPdf, getPdfUrl, deletePdf } from "@/services/userContent/pdf";
 import { updateEbookUserContent } from "@/services/userContent/update";
 import { MdPhoto, MdDescription, MdClose } from "react-icons/md";
@@ -36,9 +38,34 @@ export default function BasicInfoTab({
 	const [pdfLoading, setPdfLoading] = useState(false);
 	const [previewLoading, setPreviewLoading] = useState(!!pdfPath);
 
+	const {
+		data: uploadStatus,
+		isLoading: statusLoading,
+		isFetching: statusFetching,
+	} = useQuery({
+		queryKey: ["upload_status", content.id],
+		queryFn: async () => {
+			const supabase = createClient();
+			const { data, error } = await supabase
+				.from("ebook_user_content")
+				.select("upload_worker_status")
+				.eq("id", content.id)
+				.single();
+			if (error) throw error;
+			return data.upload_worker_status;
+		},
+		refetchInterval: (query) => {
+			if (!query.state.data) return 1000;
+			if (query.state.data === "SUCCESS") return false;
+			return 1000;
+		},
+		enabled: !!pdfPath && !!content.id,
+	});
+
 	useEffect(() => {
 		const loadPreviewUrl = async () => {
-			if (pdfPath) {
+			if (pdfPath && uploadStatus === "SUCCESS") {
+				console.log("pdfPath:", pdfPath, "uploadStatus:", uploadStatus);
 				setPreviewLoading(true);
 				try {
 					const signedUrl = await getPdfUrl(pdfPath);
@@ -48,13 +75,13 @@ export default function BasicInfoTab({
 				} finally {
 					setPreviewLoading(false);
 				}
-			} else {
+			} else if (!pdfPath) {
 				setPreviewUrl(null);
 				setPreviewLoading(false);
 			}
 		};
 		loadPreviewUrl();
-	}, [pdfPath]);
+	}, [pdfPath, uploadStatus]);
 
 	// Handle file selection
 	const handleFileChange = (e) => {
@@ -99,37 +126,6 @@ export default function BasicInfoTab({
 		}
 	};
 
-	// Delete PDF
-	const handleDeletePdf = async () => {
-		if (!pdfPath) {
-			setError("Tidak ada file untuk dihapus");
-			return;
-		}
-
-		const confirmed = await modal.confirm({
-			message: "Apakah Anda yakin ingin menghapus file PDF?",
-		});
-		if (!confirmed) {
-			return;
-		}
-
-		setPdfLoading(true);
-		setError(null);
-
-		try {
-			await deletePdf(content.id, pdfPath);
-			await updateEbookUserContent(content.id, {
-				storage_file_name: null,
-			});
-			setPdfPath("");
-			setPreviewUrl(null);
-		} catch (err) {
-			setError(err.message);
-		} finally {
-			setPdfLoading(false);
-		}
-	};
-
 	return (
 		<div className="mb-xl">
 			<h2 className="section-title my-2">Informasi Umum</h2>
@@ -143,9 +139,16 @@ export default function BasicInfoTab({
 									className="border border-gray-300 rounded-lg overflow-hidden bg-white"
 									style={{ height: "400px" }}
 								>
-									{previewLoading ? (
-										<div className="flex items-center justify-center h-full">
-											<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+									{previewLoading ||
+									statusLoading ||
+									statusFetching ||
+									(uploadStatus &&
+										uploadStatus !== "SUCCESS") ? (
+										<div className="flex items-center justify-center h-full flex-col">
+											<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-2"></div>
+											<p className="text-sm text-gray-600">
+												Mengunggah PDF...
+											</p>
 										</div>
 									) : previewUrl ? (
 										<iframe

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useModal } from "@/components/modal/ModalProvider";
+import dynamic from "next/dynamic";
 
 // Services
 import { updateEbookUserContent } from "@/services/userContent/update";
@@ -11,7 +12,9 @@ import { updateEbookUserContent } from "@/services/userContent/update";
 import PageHeader from "@/components/body/PageHeader";
 import TabActions from "../components/TabActions";
 import TabNavigation from "../components/TabNavigation";
-import BasicInfoTab from "./components/BasicInfoTab";
+const BasicInfoTab = dynamic(() => import("./components/BasicInfoTab"), {
+	ssr: false,
+});
 import Breadcrumb from "@/components/body/Breadcrumb";
 
 export default function GeneralDetail({

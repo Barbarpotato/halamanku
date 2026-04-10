@@ -6,9 +6,10 @@ import { useModal } from "@/components/modal/ModalProvider";
 import { getEbookUserContentAccessList } from "@/services/userContentAccess/get";
 import { createEbookUserContentAccess } from "@/services/userContentAccess/create";
 import { deleteEbookUserContentAccess } from "@/services/userContentAccess/delete";
-import { MdAdd, MdSearch } from "react-icons/md";
+import { MdAdd, MdSearch, MdOutlineDescription } from "react-icons/md";
+import NotFound from "@/components/body/NotFound";
 
-export default function AccessTab({ content, readOnly = false }) {
+export default function AccessTab({ content, readOnly = false, user }) {
 	const queryClient = useQueryClient();
 	const modal = useModal();
 	const [emailFilter, setEmailFilter] = useState("");
@@ -19,6 +20,18 @@ export default function AccessTab({ content, readOnly = false }) {
 	const [showAddModal, setShowAddModal] = useState(false);
 	const [showSearchModal, setShowSearchModal] = useState(false);
 	const [emailError, setEmailError] = useState("");
+
+	if (!content.storage_file_name || !content.storage_file_total_page) {
+		return (
+			<NotFound
+				icon={
+					<MdOutlineDescription className="mx-auto h-12 w-12 text-gray-400" />
+				}
+				title="Manajemen akses belum tersedia"
+				description="Anda belum mengunggah file PDF anda."
+			/>
+		);
+	}
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: [
@@ -231,19 +244,24 @@ export default function AccessTab({ content, readOnly = false }) {
 										})}
 									</div>
 								</div>
-								<div className="access-actions">
-									<button
-										onClick={(e) => {
-											e.preventDefault();
-											handleDelete(access.id);
-										}}
-										disabled={deleteMutation.isPending}
-										className="btn-danger-outline btn-sm"
-										title="Hapus akses"
-									>
-										Hapus
-									</button>
-								</div>
+								{user?.email &&
+									access.email_address !== user.email && (
+										<div className="access-actions">
+											<button
+												onClick={(e) => {
+													e.preventDefault();
+													handleDelete(access.id);
+												}}
+												disabled={
+													deleteMutation.isPending
+												}
+												className="btn-danger-outline btn-sm"
+												title="Hapus akses"
+											>
+												Hapus
+											</button>
+										</div>
+									)}
 							</div>
 						))}
 					</div>
