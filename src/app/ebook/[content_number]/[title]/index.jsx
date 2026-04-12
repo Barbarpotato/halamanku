@@ -7,38 +7,11 @@ import { useRouter } from "next/navigation";
 import styles from "./ebook.module.css";
 import Link from "next/link";
 import ErrorPage from "@/components/body/ErrorPage";
-import { MdLock } from "react-icons/md";
+import { MdLock, MdBuild, MdChat, MdShare } from "react-icons/md";
 
 const PAGE_BUFFER = 25;
 const JUMP_PRELOAD_RANGE = 2;
 const SLIDER_DEBOUNCE = 250;
-
-const generateSkeleton = () => {
-	const paragraphs = Math.floor(Math.random() * 3) + 4;
-
-	return Array.from({ length: paragraphs }).map((_, pIndex) => {
-		const lines = Math.floor(Math.random() * 4) + 3;
-
-		return (
-			<div key={pIndex} className="flex flex-col gap-2 mt-4">
-				{Array.from({ length: lines }).map((_, lIndex) => {
-					const width =
-						lIndex === lines - 1
-							? `${40 + Math.random() * 40}%`
-							: `${80 + Math.random() * 20}%`;
-
-					return (
-						<div
-							key={lIndex}
-							className="h-3 bg-gray-300 rounded"
-							style={{ width }}
-						/>
-					);
-				})}
-			</div>
-		);
-	});
-};
 
 export default function FlipBookReader({ contentNumber, title, totalPages }) {
 	const [pages, setPages] = useState({});
@@ -46,6 +19,10 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 	const [loading, setLoading] = useState(true);
 	const [inputPage, setInputPage] = useState(1);
 	const [accessDenied, setAccessDenied] = useState(false);
+
+	const [showTools, setShowTools] = useState(false);
+	const [isLandscape, setIsLandscape] = useState(false);
+	const [isMobile, setIsMobile] = useState(false);
 
 	const tokenRef = useRef(null);
 	const loadingSet = useRef(new Set());
@@ -56,35 +33,6 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 	const router = useRouter();
 
 	const [size, setSize] = useState({ width: 600, height: 800 });
-	useEffect(() => {
-		const updateSize = () => {
-			const screenWidth = window.innerWidth;
-
-			if (screenWidth < 480) {
-				// mobile
-				const width = screenWidth; // padding
-				setSize({
-					width,
-					height: width * (4 / 3), // keep ratio
-				});
-			} else if (screenWidth < 768) {
-				// tablet
-				const width = screenWidth - 80;
-				setSize({
-					width,
-					height: width * (4 / 3),
-				});
-			} else {
-				// desktop
-				setSize({ width: 600, height: 800 });
-			}
-		};
-
-		updateSize();
-		window.addEventListener("resize", updateSize);
-
-		return () => window.removeEventListener("resize", updateSize);
-	}, []);
 
 	useEffect(() => {
 		const init = async () => {
@@ -179,6 +127,64 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 		}
 	};
 
+	useEffect(() => {
+		const updateSize = () => {
+			const screenWidth = window.innerWidth;
+			const screenHeight = window.innerHeight;
+
+			if (screenWidth < 600) {
+				// pure mobile
+				setSize({ width: screenWidth, height: screenHeight * 0.8 });
+				setIsMobile(true);
+			} else {
+				if (screenWidth / screenHeight < 1) {
+					// For tablet
+					setSize({
+						width: screenWidth * 0.9,
+						height: screenHeight * 0.8,
+					});
+					setIsMobile(true);
+				} else {
+					const totalBookWidth = Math.min(screenWidth * 0.9, 1300); // total width for both pages
+					let pageWidth = Math.round(totalBookWidth / 2);
+					let pageHeight = Math.round(pageWidth * (4 / 3)); // 3:4 ratio
+
+					if (pageWidth < 500) {
+						// landscape mobile orinetation
+						setSize({
+							width: screenWidth * 0.8,
+							height: screenWidth,
+						});
+						setIsLandscape(true);
+						setIsMobile(true);
+					} else {
+						// Don't make it too tall
+						const maxHeight = Math.floor(screenHeight * 0.85);
+						if (pageHeight > maxHeight) {
+							pageHeight = maxHeight;
+							pageWidth = Math.round(pageHeight * (3 / 4));
+						}
+						setSize({ width: pageWidth, height: pageHeight });
+					}
+				}
+			}
+		};
+
+		updateSize();
+		window.addEventListener("resize", updateSize);
+
+		return () => window.removeEventListener("resize", updateSize);
+	}, []);
+
+	// Background preloading based on current page
+	useEffect(() => {
+		// Preload the next 2 pages ahead
+		if (tokenRef.current) {
+			loadPage(currentPage + 2, currentPage);
+			loadPage(currentPage + 3, currentPage);
+		}
+	}, [currentPage]);
+
 	const onFlip = (e) => {
 		const current = e.data;
 
@@ -191,20 +197,23 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 	};
 
 	const handleJump = async (pageIndex) => {
-		if (pageIndex < 0 || pageIndex >= totalPages) return;
+		let clampedIndex = Math.max(
+			0,
+			Math.min(totalPages - 1, Math.floor(pageIndex)),
+		);
 
-		setCurrentPage(pageIndex);
-		setInputPage(pageIndex + 1);
+		setCurrentPage(clampedIndex);
+		setInputPage(clampedIndex + 1);
 
 		for (
-			let i = pageIndex - JUMP_PRELOAD_RANGE;
-			i <= pageIndex + JUMP_PRELOAD_RANGE;
+			let i = clampedIndex - JUMP_PRELOAD_RANGE;
+			i <= clampedIndex + JUMP_PRELOAD_RANGE;
 			i++
 		) {
-			loadPage(i, pageIndex);
+			loadPage(i, clampedIndex);
 		}
 
-		bookRef.current?.pageFlip().flip(pageIndex);
+		bookRef.current?.pageFlip().turnToPage(clampedIndex);
 	};
 
 	const handleSliderChange = (value) => {
@@ -223,6 +232,44 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 	const goNext = () => bookRef.current?.pageFlip().flipNext();
 	const goPrev = () => bookRef.current?.pageFlip().flipPrev();
 
+	const controls = (
+		<div className={styles.controls}>
+			<input
+				type="range"
+				min={0}
+				max={totalPages - 1}
+				value={currentPage}
+				onChange={(e) => handleSliderChange(Number(e.target.value))}
+				className={styles.slider}
+			/>
+
+			<div className={styles.pageInputWrapper}>
+				<input
+					type="number"
+					max={totalPages}
+					value={inputPage}
+					onChange={(e) => {
+						const val = Number(e.target.value);
+						if (!isNaN(val)) {
+							setInputPage(
+								Math.max(1, Math.min(totalPages, val)),
+							);
+						}
+					}}
+					onBlur={() => handleJump(inputPage - 1)}
+					onKeyDown={(e) => {
+						if (e.key === "Enter") {
+							handleJump(inputPage - 1);
+						}
+					}}
+					className={styles.pageInput}
+				/>
+				<span> /</span>
+				<span> {totalPages}</span>
+			</div>
+		</div>
+	);
+
 	if (accessDenied) {
 		const accessDeniedIcon = (
 			<MdLock className="mx-auto h-24 w-24 text-red-400" />
@@ -239,113 +286,208 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 		);
 	}
 
-	return (
-		<div className={styles.container}>
-			<>
-				{/* 🔥 GLOBAL LOADING OVERLAY */}
-				{loading && (
-					<div className={styles.globalLoader}>
-						<div className={styles.spinner}></div>
-						<p className={styles.loadingText}>
-							Mempersiapkan buku Anda...
-						</p>
+	return isMobile && !isLandscape ? (
+		<div className={styles.mobileContainer}>
+			{/* 🔥 GLOBAL LOADING OVERLAY */}
+			{loading && (
+				<div className={styles.globalLoader}>
+					<div className={styles.spinner}></div>
+					<p className={styles.loadingText}>
+						Mempersiapkan buku Anda...
+					</p>
+				</div>
+			)}
+
+			{/* BRAND */}
+			<Link href="/">
+				<div className={`${styles.brand} ${styles.topBar}`}>
+					<div className={styles.logoPlaceholder}>
+						<img src="/halamanku.png" alt="Halamanku" />
+					</div>
+					<span>
+						Dibuat dengan <b>Halamanku</b>
+					</span>
+				</div>
+			</Link>
+
+			<div className={styles.bookWrapper}>
+				<HTMLFlipBook
+					ref={bookRef}
+					width={size.width}
+					height={size.height}
+					flippingTime={900}
+					drawShadow={true}
+					useMouseEvents={true}
+					className={styles.flipBook}
+					onFlip={onFlip}
+					showCover={isMobile ? false : true}
+					mobileScrollSupport={true}
+				>
+					{Array.from({ length: totalPages }).map((_, i) => (
+						<div key={i} className={styles.page}>
+							{pages[i] ? (
+								<img
+									src={cacheRef.current[i]}
+									className={styles.canvas}
+									draggable={false}
+								/>
+							) : (
+								<div className="w-full h-full bg-[#fdfcf7] flex items-center justify-center">
+									<div className={styles.spinner}></div>
+								</div>
+							)}
+						</div>
+					))}
+				</HTMLFlipBook>
+
+				<button
+					onClick={goPrev}
+					className={`${styles.navButton} ${styles.left} ${styles.navFixed}`}
+				>
+					‹
+				</button>
+
+				<button
+					onClick={goNext}
+					className={`${styles.navButton} ${styles.right} ${styles.navFixed}`}
+				>
+					›
+				</button>
+			</div>
+
+			<div
+				className={`${styles.mobileTab} ${isLandscape ? styles.mobileTabSticky : ""}`}
+			>
+				<button
+					className={styles.tabButton}
+					onClick={() => setShowTools(!showTools)}
+				>
+					<MdBuild />
+				</button>
+				<button className={styles.tabButton}>
+					<MdChat />
+				</button>
+				<button className={styles.tabButton}>
+					<MdShare />
+				</button>
+			</div>
+
+			{showTools && (
+				<div
+					className={`${styles.toolsOverlay} ${isLandscape ? styles.toolsOverlayFixed : ""}`}
+				>
+					{controls}
+				</div>
+			)}
+		</div>
+	) : (
+		<div
+			className={`${isLandscape ? styles.containerScroll : styles.container}`}
+		>
+			{/* 🔥 GLOBAL LOADING OVERLAY */}
+			{loading && (
+				<div className={styles.globalLoader}>
+					<div className={styles.spinner}></div>
+					<p className={styles.loadingText}>
+						Mempersiapkan buku Anda...
+					</p>
+				</div>
+			)}
+
+			{/* BRAND */}
+			<Link href="/">
+				<div className={styles.brand}>
+					<div className={styles.logoPlaceholder}>
+						<img src="/halamanku.png" alt="Halamanku" />
+					</div>
+					<span>
+						Dibuat dengan <b>Halamanku</b>
+					</span>
+				</div>
+			</Link>
+
+			<div
+				className={`${isLandscape ? styles.bookWrapperScroll : styles.bookWrapper}`}
+			>
+				<HTMLFlipBook
+					ref={bookRef}
+					width={size.width}
+					height={size.height}
+					flippingTime={900}
+					drawShadow={true}
+					useMouseEvents={true}
+					className={styles.flipBook}
+					onFlip={onFlip}
+					showCover={isMobile ? false : true}
+					mobileScrollSupport={true}
+				>
+					{Array.from({ length: totalPages }).map((_, i) => (
+						<div key={i} className={styles.page}>
+							{pages[i] ? (
+								<img
+									src={cacheRef.current[i]}
+									className={styles.canvas}
+									draggable={false}
+								/>
+							) : (
+								<div className="w-full h-full bg-[#fdfcf7] flex items-center justify-center">
+									<div className={styles.spinner}></div>
+								</div>
+							)}
+						</div>
+					))}
+				</HTMLFlipBook>
+
+				<button
+					onClick={goPrev}
+					className={`${styles.navButton} ${styles.left} ${styles.navFixed}`}
+				>
+					‹
+				</button>
+
+				<button
+					onClick={goNext}
+					className={`${styles.navButton} ${styles.right} ${styles.navFixed}`}
+				>
+					›
+				</button>
+
+				{isLandscape ? (
+					<>
+						<div
+							className={`${styles.mobileTab} ${isLandscape ? styles.mobileTabSticky : ""}`}
+						>
+							<button
+								className={styles.tabButton}
+								onClick={() => setShowTools(!showTools)}
+							>
+								<MdBuild />
+							</button>
+							<button className={styles.tabButton}>
+								<MdChat />
+							</button>
+							<button className={styles.tabButton}>
+								<MdShare />
+							</button>
+						</div>
+					</>
+				) : (
+					<>
+						<div
+							className={`${styles.footer} ${isLandscape ? styles.footerSticky : !isMobile ? styles.footerFixed : ""}`}
+						>
+							{controls}
+						</div>
+					</>
+				)}
+				{showTools && (
+					<div
+						className={`${styles.toolsOverlay} ${isLandscape ? styles.toolsOverlayFixed : ""}`}
+					>
+						{controls}
 					</div>
 				)}
-
-				{/* BRAND */}
-				<Link href="/">
-					<div className={styles.brand}>
-						<div className={styles.logoPlaceholder}>
-							<img src="/halamanku.png" alt="Halamanku" />
-						</div>
-						<span>
-							Dibuat dengan <b>Halamanku</b>
-						</span>
-					</div>
-				</Link>
-
-				<div className={styles.bookWrapper}>
-					<HTMLFlipBook
-						ref={bookRef}
-						width={size.width}
-						height={size.height}
-						flippingTime={900}
-						drawShadow={true}
-						useMouseEvents={true}
-						className={styles.flipBook}
-						onFlip={onFlip}
-						showCover={true}
-						mobileScrollSupport={true}
-					>
-						{Array.from({ length: totalPages }).map((_, i) => (
-							<div key={i} className={styles.page}>
-								{pages[i] ? (
-									<img
-										src={cacheRef.current[i]}
-										className={styles.canvas}
-										draggable={false}
-									/>
-								) : (
-									<div className="w-full h-full bg-[#fdfcf7] p-8 animate-pulse flex flex-col">
-										{generateSkeleton()}
-									</div>
-								)}
-							</div>
-						))}
-					</HTMLFlipBook>
-
-					<button
-						onClick={goPrev}
-						className={`${styles.navButton} ${styles.left}`}
-					>
-						‹
-					</button>
-
-					<button
-						onClick={goNext}
-						className={`${styles.navButton} ${styles.right}`}
-					>
-						›
-					</button>
-				</div>
-
-				<div className={styles.footer}>
-					<div className={styles.controls}>
-						<input
-							type="range"
-							min={0}
-							max={totalPages - 1}
-							value={currentPage}
-							onChange={(e) =>
-								handleSliderChange(Number(e.target.value))
-							}
-							className={styles.slider}
-						/>
-
-						<div className={styles.pageInputWrapper}>
-							<input
-								type="number"
-								min={1}
-								max={totalPages}
-								value={inputPage}
-								onChange={(e) => {
-									const val = Number(e.target.value);
-									setInputPage(val);
-								}}
-								onBlur={() => handleJump(inputPage - 1)}
-								onKeyDown={(e) => {
-									if (e.key === "Enter") {
-										handleJump(inputPage - 1);
-									}
-								}}
-								className={styles.pageInput}
-							/>
-							<span> /</span>
-							<span> {totalPages}</span>
-						</div>
-					</div>
-				</div>
-			</>
+			</div>
 		</div>
 	);
 }

@@ -4,7 +4,7 @@
 	align-items: center;
 	justify-content: center;
 	height: 100vh;
-	background: gray;
+	background: #404040;
 	position: relative;
 }
 
@@ -19,12 +19,30 @@
 	position: relative;
 }
 
+.bookWrapperScroll {
+	/* min-height: 100vh; */
+	background-color: #404040;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.containerScroll {
+	/* display: flex; */
+	background-color: #404040;
+	justify-content: center;
+	align-items: center;
+	/* width: 100%; */
+	/* height: 100%; */
+	overflow-y: scroll;
+}
+
 .flipBook {
 	display: flex;
 	width: 100%;
-	height: 700px;
-	box-shadow: 0 40px 100px rgba(0, 0, 0, 0.35);
-	border-radius: 10px;
+	/* height: 700px; */
 	overflow: hidden;
 }
 
@@ -68,22 +86,49 @@
 	background: black;
 }
 
+.navSticky {
+	position: fixed;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.navFixed {
+	position: fixed;
+}
+
 .left {
-	left: -3vw;
+	left: 1vw;
 }
 
 .right {
-	right: -3vw;
+	right: 1vw;
 }
 
 /* FOOTER */
 .footer {
+	width: 100%;
 	margin-top: 15px;
 	font-size: 16px;
 	background: rgba(0, 0, 0, 0.6);
 	color: white;
 	padding: 5px 10px;
 	border-radius: 8px;
+}
+
+.footerSticky {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: 0;
+}
+
+.footerFixed {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: 0;
 }
 
 /* CONTROLS */
@@ -96,6 +141,8 @@
 }
 
 .slider {
+	background-color: #ddd;
+	color: #000;
 	width: 60%;
 	cursor: pointer;
 }
@@ -139,7 +186,6 @@
 	z-index: 10;
 	background: rgba(255, 255, 255, 0.7);
 	padding: 6px 10px;
-	border-radius: 8px;
 	backdrop-filter: blur(6px);
 	transition: all 0.25s ease;
 }
@@ -201,16 +247,23 @@
 }
 
 /* RESPONSIVE */
-@media (max-width: 768px) {
+@media (max-width: 600px) {
 	.bookWrapper {
 		width: 100%;
 		max-width: 100%;
-		padding: 20px;
+		/* padding: 20px; */
 		box-sizing: border-box;
 	}
 
 	.page {
 		width: 100%;
+	}
+
+	.canvas {
+		width: 100% !important;
+		height: 100% !important;
+		display: block;
+		object-fit: contain; /* or 'fill' if you want to stretch exactly */
 	}
 
 	.flipBook {
@@ -224,12 +277,76 @@
 	}
 
 	.flipBook {
-		display: flex;
-		width: 100%;
-		height: 100%;
+		/* display: flex; */
+		/* width: 100%; */
+		/* height: 100%; */
 		background: white;
-		box-shadow: 0 40px 100px rgba(0, 0, 0, 0.35);
-		border-radius: 10px;
+		/* box-shadow: 0 40px 100px rgba(0, 0, 0, 0.35); */
+		/* border-radius: 10px; */
 		overflow: hidden;
 	}
+}
+
+/* MOBILE LAYOUT */
+.mobileContainer {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	background: #404040;
+	position: relative;
+}
+
+.mobileContainer .bookWrapper {
+	flex: 1;
+	padding: 20px;
+	box-sizing: border-box;
+}
+
+.topBar {
+	opacity: 0.8;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 10;
+}
+
+.mobileTab {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	background: rgba(0, 0, 0, 0.6);
+	padding: 10px;
+	z-index: 10;
+}
+
+.mobileTabSticky {
+	position: fixed;
+}
+
+.tabButton {
+	background: none;
+	border: none;
+	color: white;
+	font-size: 24px;
+	cursor: pointer;
+}
+
+.toolsOverlay {
+	position: absolute;
+	bottom: 44px;
+	left: 0;
+	right: 0;
+	background: rgba(0, 0, 0, 0.8);
+	padding: 10px;
+	z-index: 11;
+}
+
+.toolsOverlayFixed {
+	position: fixed;
+	bottom: 44px;
 }
