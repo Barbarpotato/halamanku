@@ -7,7 +7,14 @@ import { useRouter } from "next/navigation";
 import styles from "./ebook.module.css";
 import Link from "next/link";
 import ErrorPage from "@/components/body/ErrorPage";
-import { MdLock, MdBuild, MdChat, MdShare } from "react-icons/md";
+import {
+	MdLock,
+	MdBuild,
+	MdChat,
+	MdShare,
+	MdFullscreen,
+	MdFullscreenExit,
+} from "react-icons/md";
 
 const PAGE_BUFFER = 25;
 const JUMP_PRELOAD_RANGE = 2;
@@ -23,6 +30,7 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 	const [showTools, setShowTools] = useState(false);
 	const [isLandscape, setIsLandscape] = useState(false);
 	const [isMobile, setIsMobile] = useState(false);
+	const [isFullscreen, setIsFullscreen] = useState(false);
 
 	const tokenRef = useRef(null);
 	const loadingSet = useRef(new Set());
@@ -176,6 +184,18 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 		return () => window.removeEventListener("resize", updateSize);
 	}, []);
 
+	useEffect(() => {
+		const handleFullscreenChange = () => {
+			setIsFullscreen(!!document.fullscreenElement);
+		};
+		document.addEventListener("fullscreenchange", handleFullscreenChange);
+		return () =>
+			document.removeEventListener(
+				"fullscreenchange",
+				handleFullscreenChange,
+			);
+	}, []);
+
 	// Background preloading based on current page
 	useEffect(() => {
 		// Preload the next 2 pages ahead
@@ -232,6 +252,39 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 	const goNext = () => bookRef.current?.pageFlip().flipNext();
 	const goPrev = () => bookRef.current?.pageFlip().flipPrev();
 
+	const toggleFullscreen = async () => {
+		try {
+			if (!document.fullscreenElement) {
+				// Enter fullscreen
+				if (document.documentElement.requestFullscreen) {
+					await document.documentElement.requestFullscreen();
+				}
+				// Fallback for older Safari / prefixed versions (rare now)
+				else if (document.documentElement.webkitRequestFullscreen) {
+					await document.documentElement.webkitRequestFullscreen();
+				} else {
+					alert("Fullscreen tidak didukung di browser ini.");
+					return;
+				}
+
+				setIsFullscreen(true);
+			} else {
+				// Exit fullscreen
+				if (document.exitFullscreen) {
+					await document.exitFullscreen();
+				} else if (document.webkitExitFullscreen) {
+					await document.webkitExitFullscreen();
+				}
+
+				setIsFullscreen(false);
+			}
+		} catch (err) {
+			console.error("Fullscreen error:", err);
+			// Optional: show user-friendly message
+			// alert("Gagal masuk ke mode fullscreen. Coba gunakan tombol lain.");
+		}
+	};
+
 	const controls = (
 		<div className={styles.controls}>
 			<input
@@ -266,6 +319,9 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 				/>
 				<span> /</span>
 				<span> {totalPages}</span>
+				<button onClick={toggleFullscreen} className={styles.tabButton}>
+					{isFullscreen ? <MdFullscreenExit /> : <MdFullscreen />}
+				</button>
 			</div>
 		</div>
 	);
@@ -372,13 +428,11 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 				</button>
 			</div>
 
-			{showTools && (
-				<div
-					className={`${styles.toolsOverlay} ${isLandscape ? styles.toolsOverlayFixed : ""}`}
-				>
-					{controls}
-				</div>
-			)}
+			<div
+				className={`${styles.toolsOverlay} ${isLandscape ? styles.toolsOverlayFixed : ""} ${showTools ? styles.toolsOverlayVisible : ""}`}
+			>
+				{controls}
+			</div>
 		</div>
 	) : (
 		<div
@@ -415,7 +469,7 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 					height={size.height}
 					flippingTime={900}
 					drawShadow={true}
-					useMouseEvents={true}
+					useMouseEvents={isLandscape ? false : true}
 					className={styles.flipBook}
 					onFlip={onFlip}
 					showCover={isMobile ? false : true}
