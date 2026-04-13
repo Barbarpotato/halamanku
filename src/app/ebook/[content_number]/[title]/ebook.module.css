@@ -365,8 +365,10 @@
 }
 
 .toolsOverlayFixed {
-	position: fixed;
+	position: absolute;
 	bottom: 44px;
+	left: 0;
+	right: 0;
 }
 
 .toolsOverlayVisible {

@@ -534,13 +534,11 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 						</div>
 					</>
 				)}
-				{showTools && (
-					<div
-						className={`${styles.toolsOverlay} ${isLandscape ? styles.toolsOverlayFixed : ""}`}
-					>
-						{controls}
-					</div>
-				)}
+				<div
+					className={`${styles.toolsOverlay} ${isLandscape ? styles.toolsOverlayFixed : ""} ${showTools ? styles.toolsOverlayVisible : ""}`}
+				>
+					{controls}
+				</div>
 			</div>
 		</div>
 	);
