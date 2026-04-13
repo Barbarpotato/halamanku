@@ -373,7 +373,7 @@ export default function FlipBookReader({ contentNumber, title, totalPages }) {
 					height={size.height}
 					flippingTime={900}
 					drawShadow={true}
-					useMouseEvents={true}
+					useMouseEvents={false}
 					className={styles.flipBook}
 					onFlip={onFlip}
 					showCover={isMobile ? false : true}
