@@ -365,7 +365,7 @@
 }
 
 .toolsOverlayFixed {
-	position: absolute;
+	position: fixed;
 	bottom: 44px;
 	left: 0;
 	right: 0;
